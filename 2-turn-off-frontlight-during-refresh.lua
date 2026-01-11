@@ -22,6 +22,11 @@ local function has_document_open()
     return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
 end
 
+-- Helper: check if this is a full refresh
+local function is_full_refresh(refresh_mode)
+    return refresh_mode == "full" or refresh_mode == "flashpartial"
+end
+
 -- Hook into ReaderUI to delay patch activation
 local original_init = ReaderUI.init
 
@@ -53,10 +58,11 @@ end
 -- Hook into the refresh function
 local original_refresh = UIManager._refresh
 
-UIManager._refresh = function(self, ...)
-    -- Only act if not currently restoring, the patch is active, in night mode, and a document is open
-    if restoring or not patch_active or not is_night_mode() or not has_document_open() then
-        return original_refresh(self, ...)
+UIManager._refresh = function(self, refresh_mode, ...)
+    -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
+    if restoring or not patch_active or not is_night_mode() or
+        not has_document_open() or not is_full_refresh(refresh_mode) then
+        return original_refresh(self, refresh_mode, ...)
     end
 
     -- Save & disable frontlight before refresh
@@ -69,7 +75,7 @@ UIManager._refresh = function(self, ...)
     end
 
     -- Perform actual refresh
-    local result = original_refresh(self, ...)
+    local result = original_refresh(self, refresh_mode, ...)
 
     -- Restore frontlight after refresh
     if saved_frontlight then
