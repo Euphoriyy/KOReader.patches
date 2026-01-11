@@ -8,9 +8,9 @@ local ReaderUI = require("apps/reader/readerui")
 local UIManager = require("ui/uimanager")
 
 local patch_active = false
-local restore_task = nil
 local saved_frontlight = nil
 local restoring = false
+local restore_task = nil
 
 -- Helper: detect night mode
 local function is_night_mode()
@@ -46,9 +46,6 @@ ReaderUI.onClose = function(self)
         UIManager:unschedule(restore_task)
         restore_task = nil
     end
-    saved_frontlight = nil
-    restoring = false
-
     logger.info("Frontlight refresh patch deactivated...")
     return original_onClose(self)
 end
