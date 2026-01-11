@@ -132,6 +132,7 @@ function ReaderMenu:setUpdateItemTable()
             {
                 text = _("Force frontlight off every page turn"),
                 checked_func = ForceFrontlightRefresh.get,
+                enabled_func = EnableFrontlightRefresh.get,
                 callback = function()
                     ForceFrontlightRefresh.toggle()
                     self.ui:handleEvent("Refresh")
