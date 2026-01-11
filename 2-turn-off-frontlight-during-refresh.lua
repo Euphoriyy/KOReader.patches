@@ -2,6 +2,9 @@
     This user patch turns off the frontlight during refreshes in night mode to prevent bright flashes.
 --]]
 
+-- CONFIG
+local IS_FORCEFUL = false -- Turns off frontlight on every page turn (default: false)
+
 local Device = require("device")
 local logger = require("logger")
 local ReaderUI = require("apps/reader/readerui")
@@ -24,7 +27,7 @@ end
 
 -- Helper: check if this is a full refresh
 local function is_full_refresh(refresh_mode)
-    return refresh_mode == "full" or refresh_mode == "flashpartial"
+    return refresh_mode == "full" or refresh_mode == "flashpartial" or (IS_FORCEFUL and refresh_mode == "partial")
 end
 
 -- Hook into ReaderUI to delay patch activation
@@ -58,11 +61,11 @@ end
 -- Hook into the refresh function
 local original_refresh = UIManager._refresh
 
-UIManager._refresh = function(self, refresh_mode, ...)
+UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
     if restoring or not patch_active or not is_night_mode() or
         not has_document_open() or not is_full_refresh(refresh_mode) then
-        return original_refresh(self, refresh_mode, ...)
+        return original_refresh(self, refresh_mode, region, dither, ...)
     end
 
     -- Save & disable frontlight before refresh
@@ -75,7 +78,7 @@ UIManager._refresh = function(self, refresh_mode, ...)
     end
 
     -- Perform actual refresh
-    local result = original_refresh(self, refresh_mode, ...)
+    local result = original_refresh(self, refresh_mode, region, dither, ...)
 
     -- Restore frontlight after refresh
     if saved_frontlight then
