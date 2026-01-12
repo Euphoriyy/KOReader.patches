@@ -36,9 +36,22 @@ local function has_document_open()
 end
 
 -- Helper: check if this is a full refresh
-local function is_full_refresh(refresh_mode)
+local function is_full_refresh(refresh_mode, region, FULL_REFRESH_COUNT, refresh_count, refresh_counted,
+                               currently_scrolling)
+    if not refresh_mode or currently_scrolling then
+        return false
+    end
+
+    -- Simulate promotion of partial refresh mode to full
+    if refresh_mode == "partial" and FULL_REFRESH_COUNT > 0 and not refresh_counted then
+        refresh_count = (refresh_count + 1) % FULL_REFRESH_COUNT
+        if refresh_count == FULL_REFRESH_COUNT - 1 and not region then
+            return true
+        end
+    end
+
     return refresh_mode == "full" or refresh_mode == "flashpartial" or
-    (ForceFrontlightRefresh.get() and refresh_mode == "partial")
+        (ForceFrontlightRefresh.get() and refresh_mode == "partial")
 end
 
 -- Hook into ReaderUI to delay patch activation
@@ -74,8 +87,9 @@ local original_refresh = UIManager._refresh
 
 UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
-    if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or
-        not has_document_open() or not is_full_refresh(refresh_mode) then
+    if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or not has_document_open() or
+        not is_full_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
+    then
         return original_refresh(self, refresh_mode, region, dither, ...)
     end
 
