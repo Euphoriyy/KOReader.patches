@@ -3,6 +3,7 @@
 --]]
 
 local Device = require("device")
+local Dispatcher = require("dispatcher")
 local logger = require("logger")
 local ReaderUI = require("apps/reader/readerui")
 local UIManager = require("ui/uimanager")
@@ -143,3 +144,31 @@ function ReaderMenu:setUpdateItemTable()
 
     original_setUpdateItemTable(self)
 end
+
+-- Toggle action events
+local function onToggleFrontlightRefreshEnabled()
+    EnableFrontlightRefresh.toggle()
+end
+
+ReaderUI.onToggleFrontlightRefreshEnabled = onToggleFrontlightRefreshEnabled
+
+local function onToggleFrontlightRefreshForceful()
+    ForceFrontlightRefresh.toggle()
+end
+
+ReaderUI.onToggleFrontlightRefreshForceful = onToggleFrontlightRefreshForceful
+
+-- Register the dispatcher actions
+Dispatcher:registerAction("frontlight_refresh_toggle", {
+    category = "none",
+    event = "ToggleFrontlightRefreshEnabled",
+    title = _("Toggle turning off frontlight on refresh"),
+    screen = true,
+})
+
+Dispatcher:registerAction("frontlight_refresh_toggle_forceful", {
+    category = "none",
+    event = "ToggleFrontlightRefreshForceful",
+    title = _("Toggle force frontlight off every page turn"),
+    screen = true,
+})
