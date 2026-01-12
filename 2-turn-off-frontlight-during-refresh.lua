@@ -97,7 +97,7 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     local level = Device.powerd:frontlightIntensity()
     if level > 0 then
         saved_frontlight = level
-        Device.powerd:setIntensity(Device.powerd.fl_min)
+        Device.powerd:setIntensityHW(Device.powerd.fl_min)
     else
         saved_frontlight = nil
     end
@@ -109,7 +109,7 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     if saved_frontlight then
         restoring = true
         restore_task = UIManager:scheduleIn(0.02, function()
-            Device.powerd:setIntensity(saved_frontlight)
+            Device.powerd:setIntensityHW(saved_frontlight)
             saved_frontlight = nil
             -- Clear flag after a longer delay to catch all triggered refreshes
             UIManager:scheduleIn(0.15, function()
