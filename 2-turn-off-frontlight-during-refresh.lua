@@ -11,6 +11,7 @@ local UIManager = require("ui/uimanager")
 local function Setting(name, default)
     local self = {}
     self.get = function() return G_reader_settings:readSetting(name, default) end
+    self.set = function(value) return G_reader_settings:saveSetting(name, value) end
     self.toggle = function() G_reader_settings:toggle(name) end
     return self
 end
@@ -18,6 +19,7 @@ end
 -- Settings
 local EnableFrontlightRefresh = Setting("frontlight_refresh_enable", true) -- Enable turning off the frontlight on refreshes (default: true)
 local ForceFrontlightRefresh = Setting("frontlight_refresh_force", false)  -- Turns off frontlight on every page turn (default: false)
+local DimLevel = Setting("frontlight_refresh_dim_level", 0)                -- Variable frontlight dim level (default: 0)
 
 -- Script Variables
 local patch_active = false
@@ -95,9 +97,9 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
 
     -- Save & disable frontlight before refresh
     local level = Device.powerd:frontlightIntensity()
-    if level > 0 then
+    if level > DimLevel.get() then
         saved_frontlight = level
-        Device.powerd:setIntensityHW(Device.powerd.fl_min)
+        Device.powerd:setIntensityHW(Device.powerd.fl_min + DimLevel.get())
     else
         saved_frontlight = nil
     end
@@ -124,7 +126,9 @@ end
 -- Patch reader menu
 local ReaderMenu = require("apps/reader/modules/readermenu")
 local ReaderMenuOrder = require("ui/elements/reader_menu_order")
+local SpinWidget = require("ui/widget/spinwidget")
 local _ = require("gettext")
+local T = require("ffi/util").template
 
 local original_setUpdateItemTable = ReaderMenu.setUpdateItemTable
 
@@ -151,6 +155,35 @@ function ReaderMenu:setUpdateItemTable()
                 callback = function()
                     ForceFrontlightRefresh.toggle()
                     self.ui:handleEvent("Refresh")
+                end,
+            },
+            {
+                text_func = function()
+                    return T(_("Dim level: %1%"), DimLevel.get())
+                end,
+                keep_menu_open = true,
+                callback = function(touchmenu_instance)
+                    local spin = SpinWidget:new {
+                        title_text = _("Dim level"),
+                        info_text = _("Frontlight brightness on refresh. (Lower ⇛ Darker)"),
+                        value = DimLevel.get(),
+                        default_value = 0,
+                        value_min = 0,
+                        value_max = 10,
+                        value_step = 1,
+                        value_hold_step = 2,
+                        precision = "%1d",
+                        unit = "%",
+                        callback = function(widget)
+                            DimLevel.set(widget.value)
+                            if self.overlay_rect then
+                                UIManager:setDirty(self.ui.dialog, "partial")
+                            end
+                            if touchmenu_instance then touchmenu_instance:updateItems() end
+                        end,
+                    }
+                    UIManager:show(spin)
+                    if touchmenu_instance then touchmenu_instance:updateItems() end
                 end,
             },
         },
