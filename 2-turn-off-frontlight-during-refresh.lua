@@ -19,6 +19,7 @@ end
 -- Settings
 local EnableFrontlightRefresh = Setting("frontlight_refresh_enable", true) -- Enable turning off the frontlight on refreshes (default: true)
 local ForceFrontlightRefresh = Setting("frontlight_refresh_force", false)  -- Turns off frontlight on every page turn (default: false)
+local UIFrontlightRefresh = Setting("frontlight_refresh_ui", true)         -- Enable turning off the frontlight on refreshes in UI menus (default: true)
 local DimLevel = Setting("frontlight_refresh_dim_level", 0)                -- Variable frontlight dim level (default: 0)
 
 -- Script Variables
@@ -53,7 +54,8 @@ local function is_full_refresh(refresh_mode, region, FULL_REFRESH_COUNT, refresh
     end
 
     return refresh_mode == "full" or refresh_mode == "flashpartial" or
-        (ForceFrontlightRefresh.get() and refresh_mode == "partial")
+        (ForceFrontlightRefresh.get() and refresh_mode == "partial") or
+        (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui"))
 end
 
 -- Hook into ReaderUI to delay patch activation
@@ -158,6 +160,15 @@ function ReaderMenu:setUpdateItemTable()
                 end,
             },
             {
+                text = _("Turn off frontlight on UI refreshes"),
+                checked_func = UIFrontlightRefresh.get,
+                enabled_func = EnableFrontlightRefresh.get,
+                callback = function()
+                    UIFrontlightRefresh.toggle()
+                    self.ui:handleEvent("Refresh")
+                end,
+            },
+            {
                 text_func = function()
                     return T(_("Dim level: %1%"), DimLevel.get())
                 end,
@@ -205,6 +216,12 @@ end
 
 ReaderUI.onToggleFrontlightRefreshForceful = onToggleFrontlightRefreshForceful
 
+local function onToggleFrontlightRefreshUI()
+    UIFrontlightRefresh.toggle()
+end
+
+ReaderUI.onToggleFrontlightRefreshUI = onToggleFrontlightRefreshUI
+
 -- Register the dispatcher actions
 Dispatcher:registerAction("frontlight_refresh_toggle", {
     category = "none",
@@ -217,5 +234,12 @@ Dispatcher:registerAction("frontlight_refresh_toggle_forceful", {
     category = "none",
     event = "ToggleFrontlightRefreshForceful",
     title = _("Toggle force frontlight off every page turn"),
+    screen = true,
+})
+
+Dispatcher:registerAction("frontlight_refresh_toggle_ui", {
+    category = "none",
+    event = "ToggleFrontlightRefreshUI",
+    title = _("Toggle turning off frontlight in UI refreshes"),
     screen = true,
 })
