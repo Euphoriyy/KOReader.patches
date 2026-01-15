@@ -24,7 +24,6 @@ local DimLevel = Setting("frontlight_refresh_dim_level", 0)                -- Va
 
 -- Script Variables
 local patch_active = false
-local saved_frontlight = nil
 local restoring = false
 local restore_task = nil
 
@@ -98,23 +97,20 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     end
 
     -- Save & disable frontlight before refresh
-    local level = Device.powerd:frontlightIntensity()
-    if level > DimLevel.get() then
-        saved_frontlight = level
+    local intensity = G_reader_settings:readSetting("frontlight_intensity")
+    if intensity > DimLevel.get() then
         Device.powerd:setIntensityHW(Device.powerd.fl_min + DimLevel.get())
-    else
-        saved_frontlight = nil
     end
 
     -- Perform actual refresh
     local result = original_refresh(self, refresh_mode, region, dither, ...)
 
     -- Restore frontlight after refresh
-    if saved_frontlight then
+    if G_reader_settings:readSetting("is_frontlight_on") then
         restoring = true
         restore_task = UIManager:scheduleIn(0.02, function()
-            Device.powerd:setIntensityHW(saved_frontlight)
-            saved_frontlight = nil
+            Device.powerd:setIntensityHW(intensity)
+
             -- Clear flag after a longer delay to catch all triggered refreshes
             UIManager:scheduleIn(0.15, function()
                 restoring = false
