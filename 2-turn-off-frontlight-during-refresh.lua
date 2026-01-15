@@ -54,8 +54,8 @@ local function is_full_refresh(refresh_mode, region, FULL_REFRESH_COUNT, refresh
     end
 
     return refresh_mode == "full" or refresh_mode == "flashpartial" or
-        (ForceFrontlightRefresh.get() and refresh_mode == "partial") or
-        (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui"))
+        (ForceFrontlightRefresh.get() and refresh_mode == "partial")
+        -- (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui"))
 end
 
 -- Hook into ReaderUI to delay patch activation
