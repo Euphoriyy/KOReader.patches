@@ -111,7 +111,7 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     -- Save & disable frontlight before refresh
     local intensity = G_reader_settings:readSetting("frontlight_intensity")
     if intensity > DimLevel.get() then
-        Device.powerd:setIntensityHW(Device.powerd.fl_min + DimLevel.get())
+        Device.powerd:setIntensity(Device.powerd.fl_min + DimLevel.get())
     end
 
     -- Perform actual refresh
@@ -121,7 +121,7 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     if G_reader_settings:readSetting("is_frontlight_on") then
         restoring = true
         restore_task = UIManager:scheduleIn(0.02, function()
-            Device.powerd:setIntensityHW(intensity)
+            Device.powerd:setIntensity(intensity)
 
             -- Clear flag after a longer delay to catch all triggered refreshes
             UIManager:scheduleIn(0.15, function()
