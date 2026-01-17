@@ -39,23 +39,31 @@ local function has_document_open()
     return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
 end
 
--- Helper: check if this is a full refresh
-local function is_full_refresh(refresh_mode, region, FULL_REFRESH_COUNT, refresh_count, refresh_counted,
-                               currently_scrolling)
+-- Helper: check if this is a flashing refresh
+local function is_flashing_refresh(refresh_mode, region, FULL_REFRESH_COUNT, refresh_count, refresh_counted,
+                                   currently_scrolling)
     if not refresh_mode or currently_scrolling then
         return false
     end
 
-    -- Simulate promotion of partial refresh mode to full
+    if refresh_mode == "full" or refresh_mode == "flashpartial" then
+        return true
+    end
+
+    -- Simulate promotion of partial refresh mode to full & flashui
     if refresh_mode == "partial" and FULL_REFRESH_COUNT > 0 and not refresh_counted then
         refresh_count = (refresh_count + 1) % FULL_REFRESH_COUNT
-        if refresh_count == FULL_REFRESH_COUNT - 1 and not region then
-            return true
+        if refresh_count == FULL_REFRESH_COUNT - 1 then
+            -- NOTE: Promote to "full" (true) if no region (reader), to "flashui" otherwise (UI)
+            if region then
+                refresh_mode = "flashui"
+            else
+                return true
+            end
         end
     end
 
-    return refresh_mode == "full" or refresh_mode == "flashpartial" or
-        (ForceFrontlightRefresh.get() and refresh_mode == "partial") or
+    return (ForceFrontlightRefresh.get() and refresh_mode == "partial") or
         (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui"))
 end
 
@@ -108,12 +116,12 @@ end
 -- Hook into the refresh function
 local original_refresh = UIManager._refresh
 
-UIManager._refresh = function(self, refresh_mode, region, dither, ...)
+UIManager._refresh = function(self, refresh_mode, region, dither)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
     if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or not has_document_open() or
-        not is_full_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
+        not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
     then
-        return original_refresh(self, refresh_mode, region, dither, ...)
+        return original_refresh(self, refresh_mode, region, dither)
     end
 
     -- Save & disable frontlight before refresh
@@ -126,7 +134,7 @@ UIManager._refresh = function(self, refresh_mode, region, dither, ...)
     end
 
     -- Perform actual refresh
-    local result = original_refresh(self, refresh_mode, region, dither, ...)
+    local result = original_refresh(self, refresh_mode, region, dither)
 
     -- Restore frontlight after refresh
     if dimmed then
