@@ -133,22 +133,21 @@ UIManager._refresh = function(self, refresh_mode, region, dither)
     return result
 end
 
--- Patch reader menu
+-- Patch reader & filemanager menus
 local ReaderMenu = require("apps/reader/modules/readermenu")
 local ReaderMenuOrder = require("ui/elements/reader_menu_order")
+local FileManagerMenu = require("apps/filemanager/filemanagermenu")
+local FileManagerMenuOrder = require("ui/elements/filemanager_menu_order")
 local SpinWidget = require("ui/widget/spinwidget")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
-local original_setUpdateItemTable = ReaderMenu.setUpdateItemTable
+local original_readermenu_setUpdateItemTable = ReaderMenu.setUpdateItemTable
+local original_filemanagermenu_setUpdateItemTable = FileManagerMenu.setUpdateItemTable
 
-function ReaderMenu:setUpdateItemTable()
-    -- Add main menu entry with submenu
-    local order = ReaderMenuOrder.typeset
-    table.insert(order, #order + 1, "frontlight_refresh_menu")
-
-    self.menu_items.frontlight_refresh_menu = {
-        text = _("Frontlight Refresh"),
+local function set_menu(self, menu_items)
+    menu_items.frontlight_refresh = {
+        text = _("Frontlight refresh"),
         sub_item_table = {
             {
                 text = _("Enable turning off frontlight on refresh"),
@@ -216,8 +215,24 @@ function ReaderMenu:setUpdateItemTable()
             },
         },
     }
+end
 
-    original_setUpdateItemTable(self)
+function ReaderMenu:setUpdateItemTable()
+    -- Add main menu entry with submenu
+    local order = ReaderMenuOrder.screen
+    table.insert(order, #order - 6, "frontlight_refresh")
+
+    set_menu(self, self.menu_items)
+    original_readermenu_setUpdateItemTable(self)
+end
+
+function FileManagerMenu:setUpdateItemTable()
+    -- Add main menu entry with submenu
+    local order = FileManagerMenuOrder.screen
+    table.insert(order, #order - 6, "frontlight_refresh")
+
+    set_menu(self, self.menu_items)
+    original_filemanagermenu_setUpdateItemTable(self)
 end
 
 -- Toggle action events
