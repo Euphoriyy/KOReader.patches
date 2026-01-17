@@ -4,7 +4,6 @@
 
 local Device = require("device")
 local Dispatcher = require("dispatcher")
-local logger = require("logger")
 local ReaderUI = require("apps/reader/readerui")
 local Screensaver = require("ui/screensaver")
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
@@ -19,15 +18,15 @@ local function Setting(name, default)
 end
 
 -- Settings
-local EnableFrontlightRefresh = Setting("frontlight_refresh_enable", true) -- Enable turning off the frontlight on refreshes (default: true)
-local ForceFrontlightRefresh = Setting("frontlight_refresh_force", false)  -- Turns off frontlight on every page turn (default: false)
-local UIFrontlightRefresh = Setting("frontlight_refresh_ui", true)         -- Enable turning off the frontlight on refreshes in UI menus (default: true)
-local DimLevel = Setting("frontlight_refresh_dim_level", 0)                -- Variable frontlight dim level (default: 0)
+local EnableFrontlightRefresh = Setting("frontlight_refresh_enable", true)           -- Enable turning off the frontlight on refreshes (default: true)
+local ForceFrontlightRefresh = Setting("frontlight_refresh_force", false)            -- Turn off frontlight on every page turn (default: false)
+local UIFrontlightRefresh = Setting("frontlight_refresh_ui", true)                   -- Enable turning off the frontlight on refreshes in UI menus (default: true)
+local DimLevel = Setting("frontlight_refresh_dim_level", 0)                          -- Variable frontlight dim level (default: 0)
+local ReaderOnlyFrontlightRefresh = Setting("frontlight_refresh_reader_only", false) -- Turn off frontlight in reader only (default: false)
 
 -- Script Variables
 local patch_active = false
 local restoring = false
-local restore_task = nil
 
 -- Helper: detect night mode
 local function is_night_mode()
@@ -67,33 +66,15 @@ local function is_flashing_refresh(refresh_mode, region, FULL_REFRESH_COUNT, ref
         (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui"))
 end
 
--- Hook into ReaderUI to delay patch activation
-local original_init = ReaderUI.init
+-- Hook into UIManager quit to prevent frontlight dimming on quit
+local original_uimanager_quit = UIManager.quit
 
-ReaderUI.init = function(self)
-    original_init(self)
-
-    -- Activate patch after document is fully loaded
-    UIManager:scheduleIn(0.5, function()
-        if self.document then
-            patch_active = true
-            logger.info("Frontlight refresh patch now active...")
-        end
-    end)
-end
-
--- Hook into ReaderUI close to deactivate the patch
-local original_onClose = ReaderUI.onClose
-
-ReaderUI.onClose = function(self)
+UIManager.quit = function(self, exit_code, implicit)
     patch_active = false
-    if restore_task then
-        UIManager:unschedule(restore_task)
-        restore_task = nil
-    end
-    logger.info("Frontlight refresh patch deactivated...")
 
-    return original_onClose(self)
+    UIManager:scheduleIn(0.02, function()
+        return original_uimanager_quit(self, exit_code, implicit)
+    end)
 end
 
 -- Hook into Screensaver & ScreenSaverWidget to prevent the patch from dimming the screensaver when screensaver_delay is set
@@ -118,8 +99,8 @@ local original_refresh = UIManager._refresh
 
 UIManager._refresh = function(self, refresh_mode, region, dither)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
-    if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or not has_document_open() or
-        not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
+    if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or
+        not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling) or (ReaderOnlyFrontlightRefresh.get() and not has_document_open())
     then
         return original_refresh(self, refresh_mode, region, dither)
     end
@@ -139,7 +120,7 @@ UIManager._refresh = function(self, refresh_mode, region, dither)
     -- Restore frontlight after refresh
     if dimmed then
         restoring = true
-        restore_task = UIManager:scheduleIn(0.02, function()
+        UIManager:scheduleIn(0.02, function()
             Device.powerd:setIntensity(intensity)
 
             -- Clear flag after a longer delay to catch all triggered refreshes
@@ -192,6 +173,15 @@ function ReaderMenu:setUpdateItemTable()
                 enabled_func = EnableFrontlightRefresh.get,
                 callback = function()
                     UIFrontlightRefresh.toggle()
+                    self.ui:handleEvent("Refresh")
+                end,
+            },
+            {
+                text = _("Turn off frontlight in reader only"),
+                checked_func = ReaderOnlyFrontlightRefresh.get,
+                enabled_func = EnableFrontlightRefresh.get,
+                callback = function()
+                    ReaderOnlyFrontlightRefresh.toggle()
                     self.ui:handleEvent("Refresh")
                 end,
             },
@@ -249,6 +239,12 @@ end
 
 ReaderUI.onToggleFrontlightRefreshUI = onToggleFrontlightRefreshUI
 
+local function onToggleFrontlightRefreshReaderOnly()
+    ReaderOnlyFrontlightRefresh.toggle()
+end
+
+ReaderUI.onToggleFrontlightRefreshReaderOnly = onToggleFrontlightRefreshReaderOnly
+
 -- Register the dispatcher actions
 Dispatcher:registerAction("frontlight_refresh_toggle", {
     category = "none",
@@ -268,5 +264,12 @@ Dispatcher:registerAction("frontlight_refresh_toggle_ui", {
     category = "none",
     event = "ToggleFrontlightRefreshUI",
     title = _("Toggle turning off frontlight in UI refreshes"),
+    screen = true,
+})
+
+Dispatcher:registerAction("frontlight_refresh_toggle_reader_only", {
+    category = "none",
+    event = "ToggleFrontlightRefreshReaderOnly",
+    title = _("Toggle turning off frontlight in reader only"),
     screen = true,
 })
