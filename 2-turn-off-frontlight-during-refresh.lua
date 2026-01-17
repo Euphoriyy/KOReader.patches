@@ -7,6 +7,7 @@ local Dispatcher = require("dispatcher")
 local logger = require("logger")
 local ReaderUI = require("apps/reader/readerui")
 local Screensaver = require("ui/screensaver")
+local ScreenSaverWidget = require("ui/widget/screensaverwidget")
 local UIManager = require("ui/uimanager")
 
 local function Setting(name, default)
@@ -83,18 +84,25 @@ ReaderUI.onClose = function(self)
         restore_task = nil
     end
     logger.info("Frontlight refresh patch deactivated...")
+
     return original_onClose(self)
 end
 
--- Hook into Screensaver to prevent the patch from dimming the screensaver
+-- Hook into Screensaver & ScreenSaverWidget to prevent the patch from dimming the screensaver when screensaver_delay is set
 local original_screensaver_show = Screensaver.show
 
-Screensaver.show = function(self)
+function Screensaver.show(self)
     patch_active = false
+
     original_screensaver_show(self)
-    UIManager:scheduleIn(0.02, function()
-        patch_active = true
-    end)
+end
+
+local original_screensaverwidget_onCloseWidget = ScreenSaverWidget.onCloseWidget
+
+function ScreenSaverWidget.onCloseWidget()
+    original_screensaverwidget_onCloseWidget()
+
+    patch_active = true
 end
 
 -- Hook into the refresh function
