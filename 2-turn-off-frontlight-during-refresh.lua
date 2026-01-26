@@ -225,7 +225,11 @@ local function set_menu(self, menu_items)
                 end,
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
-                    local cfg = RelativeDimFrontlightRefresh.get() and rel_dim or dim
+                    local is_relative = RelativeDimFrontlightRefresh.get()
+                    local cfg = is_relative and rel_dim or dim
+                    local direction = is_relative and -1 or 1
+                    local precision = is_relative and "-%1d" or "%1d"
+
                     local spin = SpinWidget:new {
                         title_text = _("Dim level"),
                         info_text = _("Frontlight brightness on refresh. (Lower ⇛ Darker)"),
@@ -233,9 +237,9 @@ local function set_menu(self, menu_items)
                         default_value = cfg.default,
                         value_min = cfg.min,
                         value_max = cfg.max,
-                        value_step = 1,
-                        value_hold_step = 2,
-                        precision = (RelativeDimFrontlightRefresh.get() and "-" or "") .. "%1d",
+                        value_step = direction,
+                        value_hold_step = direction * 2,
+                        precision = precision,
                         unit = "%",
                         callback = function(widget)
                             DimLevel.set(widget.value)
