@@ -21,8 +21,8 @@ end
 local EnableFrontlightRefresh = Setting("frontlight_refresh_enable", true)           -- Enable turning off the frontlight on refreshes (default: true)
 local ForceFrontlightRefresh = Setting("frontlight_refresh_force", false)            -- Turn off frontlight on every page turn (default: false)
 local UIFrontlightRefresh = Setting("frontlight_refresh_ui", true)                   -- Enable turning off the frontlight on refreshes in UI menus (default: true)
-local DimLevel = Setting("frontlight_refresh_dim_level", 0)                          -- Variable frontlight dim level (default: 0)
 local ReaderOnlyFrontlightRefresh = Setting("frontlight_refresh_reader_only", false) -- Turn off frontlight in reader only (default: false)
+local DimLevel = Setting("frontlight_refresh_dim_level", 0)                          -- Variable frontlight dim level (default: 0)
 
 -- Script Variables
 local patch_active = false
@@ -69,7 +69,7 @@ end
 -- Hook into UIManager quit to prevent frontlight dimming on quit
 local original_uimanager_quit = UIManager.quit
 
-UIManager.quit = function(self, exit_code, implicit)
+function UIManager.quit(self, exit_code, implicit)
     patch_active = false
 
     UIManager:scheduleIn(0.02, function()
@@ -97,10 +97,11 @@ end
 -- Hook into the refresh function
 local original_refresh = UIManager._refresh
 
-UIManager._refresh = function(self, refresh_mode, region, dither)
+function UIManager._refresh(self, refresh_mode, region, dither)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
     if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or
-        not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling) or (ReaderOnlyFrontlightRefresh.get() and not has_document_open())
+        (ReaderOnlyFrontlightRefresh.get() and not has_document_open()) or
+        not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
     then
         return original_refresh(self, refresh_mode, region, dither)
     end
@@ -236,29 +237,21 @@ function FileManagerMenu:setUpdateItemTable()
 end
 
 -- Toggle action events
-local function onToggleFrontlightRefreshEnabled()
+ReaderUI.onToggleFrontlightRefreshEnabled = function()
     EnableFrontlightRefresh.toggle()
 end
 
-ReaderUI.onToggleFrontlightRefreshEnabled = onToggleFrontlightRefreshEnabled
-
-local function onToggleFrontlightRefreshForceful()
+ReaderUI.onToggleFrontlightRefreshForceful = function()
     ForceFrontlightRefresh.toggle()
 end
 
-ReaderUI.onToggleFrontlightRefreshForceful = onToggleFrontlightRefreshForceful
-
-local function onToggleFrontlightRefreshUI()
+ReaderUI.onToggleFrontlightRefreshUI = function()
     UIFrontlightRefresh.toggle()
 end
 
-ReaderUI.onToggleFrontlightRefreshUI = onToggleFrontlightRefreshUI
-
-local function onToggleFrontlightRefreshReaderOnly()
+ReaderUI.onToggleFrontlightRefreshReaderOnly = function()
     ReaderOnlyFrontlightRefresh.toggle()
 end
-
-ReaderUI.onToggleFrontlightRefreshReaderOnly = onToggleFrontlightRefreshReaderOnly
 
 -- Register the dispatcher actions
 Dispatcher:registerAction("frontlight_refresh_toggle", {
