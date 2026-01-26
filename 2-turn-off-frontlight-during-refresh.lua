@@ -22,11 +22,25 @@ local EnableFrontlightRefresh = Setting("frontlight_refresh_enable", true)      
 local ForceFrontlightRefresh = Setting("frontlight_refresh_force", false)            -- Turn off frontlight on every page turn (default: false)
 local UIFrontlightRefresh = Setting("frontlight_refresh_ui", true)                   -- Enable turning off the frontlight on refreshes in UI menus (default: true)
 local ReaderOnlyFrontlightRefresh = Setting("frontlight_refresh_reader_only", false) -- Turn off frontlight in reader only (default: false)
+local RelativeDimFrontlightRefresh = Setting("frontlight_refresh_rel_dim", false)    -- Dim frontlight relative to current intensity (default: false)
 local DimLevel = Setting("frontlight_refresh_dim_level", 0)                          -- Variable frontlight dim level (default: 0)
+
+-- Dim level configurations (absolute & relative)
+local dim = {
+    min = 0,
+    max = 10,
+    default = 0,
+}
+local rel_dim = {
+    min = 1,
+    max = 20,
+    default = 5,
+}
 
 -- Script Variables
 local patch_active = false
 local restoring = false
+local dimmed = false
 
 -- Helper: detect night mode
 local function is_night_mode()
@@ -108,10 +122,13 @@ function UIManager._refresh(self, refresh_mode, region, dither)
 
     -- Save & disable frontlight before refresh
     local intensity = Device.powerd.fl_intensity
-    local dimmed = false
 
-    if intensity > DimLevel.get() then
-        Device.powerd:setIntensity(Device.powerd.fl_min + DimLevel.get())
+    if not dimmed and intensity > DimLevel.get() then
+        if RelativeDimFrontlightRefresh.get() then
+            Device.powerd:setIntensity(intensity - DimLevel.get())
+        else
+            Device.powerd:setIntensity(Device.powerd.fl_min + DimLevel.get())
+        end
         dimmed = true
     end
 
@@ -123,6 +140,7 @@ function UIManager._refresh(self, refresh_mode, region, dither)
         restoring = true
         UIManager:scheduleIn(0.02, function()
             Device.powerd:setIntensity(intensity)
+            dimmed = false
 
             -- Clear flag after a longer delay to catch all triggered refreshes
             UIManager:scheduleIn(0.15, function()
@@ -186,21 +204,38 @@ local function set_menu(self, menu_items)
                 end,
             },
             {
+                text = _("Dim relative to current brightness"),
+                checked_func = RelativeDimFrontlightRefresh.get,
+                enabled_func = EnableFrontlightRefresh.get,
+                callback = function()
+                    RelativeDimFrontlightRefresh.toggle()
+
+                    -- Use default for the new mode because abs/rel scales differ
+                    local cfg = RelativeDimFrontlightRefresh.get() and rel_dim or dim
+                    DimLevel.set(cfg.default)
+
+                    self.ui:handleEvent("Refresh")
+                end,
+            },
+            {
                 text_func = function()
-                    return T(_("Dim level: %1%"), DimLevel.get())
+                    -- Add negative sign if the dim level is relative
+                    local format = "Dim level: " .. (RelativeDimFrontlightRefresh.get() and "-" or "") .. "%1%"
+                    return T(_(format), DimLevel.get())
                 end,
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
+                    local cfg = RelativeDimFrontlightRefresh.get() and rel_dim or dim
                     local spin = SpinWidget:new {
                         title_text = _("Dim level"),
                         info_text = _("Frontlight brightness on refresh. (Lower ⇛ Darker)"),
                         value = DimLevel.get(),
-                        default_value = 0,
-                        value_min = 0,
-                        value_max = 10,
+                        default_value = cfg.default,
+                        value_min = cfg.min,
+                        value_max = cfg.max,
                         value_step = 1,
                         value_hold_step = 2,
-                        precision = "%1d",
+                        precision = (RelativeDimFrontlightRefresh.get() and "-" or "") .. "%1d",
                         unit = "%",
                         callback = function(widget)
                             DimLevel.set(widget.value)
