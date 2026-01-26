@@ -37,8 +37,8 @@ local rel_dim = {
     default = 5,
 }
 
--- Script Variables
-local patch_active = false
+-- Patch Variables
+local patch_active = true
 local restoring = false
 local dimmed = false
 
