@@ -78,12 +78,12 @@ function Settings:setPersistent(thin, color_attrib, color)
     self:set(thin, color_attrib, color)
 end
 
-local function keep_read_inverted_enabled()
-    return G_reader_settings:isTrue("progress_read_keep_inverted", false)
+local function read_inverted_enabled()
+    return G_reader_settings:isTrue("progress_bar_color_read_inverted", false)
 end
 
-local function keep_unread_inverted_enabled()
-    return G_reader_settings:isTrue("progress_unread_keep_inverted", true)
+local function unread_inverted_enabled()
+    return G_reader_settings:isTrue("progress_bar_color_unread_inverted", true)
 end
 
 -- Helper: detect night mode
@@ -296,8 +296,8 @@ function ReaderFooter:_invertColorMenu(read)
     if not read then
         text = "Invert unread color in night mode"
     end
-    local setting = read and "progress_read_keep_inverted" or "progress_unread_keep_inverted"
-    local is_enabled = read and keep_read_inverted_enabled or keep_unread_inverted_enabled
+    local setting = read and "progress_bar_color_read_inverted" or "progress_bar_color_unread_inverted"
+    local is_enabled = read and read_inverted_enabled or unread_inverted_enabled
 
     return {
         text = _(text),
