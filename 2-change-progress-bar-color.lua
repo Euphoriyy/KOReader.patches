@@ -71,6 +71,10 @@ function Settings:setPersistent(thin, color_attrib, color)
     self:set(thin, color_attrib, color)
 end
 
+local function keep_read_inverted_enabled()
+    return G_reader_settings:isTrue("progress_read_keep_inverted", false)
+end
+
 local function keep_unread_inverted_enabled()
     return G_reader_settings:isTrue("progress_unread_keep_inverted", true)
 end
@@ -106,7 +110,9 @@ function ReaderFooter:onToggleNightMode()
     local unreadColor = Settings:getPersistent(thin, unread)
 
     if not is_night_mode() then
-        readColor = invertColor(readColor)
+        if not keep_read_inverted_enabled() then
+            readColor = invertColor(readColor)
+        end
         if not keep_unread_inverted_enabled() then
             unreadColor = invertColor(unreadColor)
         end
@@ -125,7 +131,9 @@ function ReaderFooter:onSetNightMode(night_mode)
     local unreadColor = Settings:getPersistent(thin, unread)
 
     if night_mode then
-        readColor = invertColor(readColor)
+        if not keep_read_inverted_enabled() then
+            readColor = invertColor(readColor)
+        end
         if not keep_unread_inverted_enabled() then
             unreadColor = invertColor(unreadColor)
         end
@@ -161,7 +169,9 @@ function ProgressWidget:_setColors(thin)
     end
 
     if is_night_mode() then
-        readColor = invertColor(readColor)
+        if not keep_read_inverted_enabled() then
+            readColor = invertColor(readColor)
+        end
         if not keep_unread_inverted_enabled() then
             unreadColor = invertColor(unreadColor)
         end
@@ -242,8 +252,8 @@ function ReaderFooter:_statusBarColorMenu(read)
                                     if not text:match("^#%x%x%x%x?%x?%x?$") then
                                         return
                                     end
-                                    local color = Blitbuffer.colorFromString(is_night_mode() and invertColor(text) or
-                                        text)
+                                    local displayText = is_night_mode() and invertColor(text) or text
+                                    local color = Blitbuffer.colorFromString(displayText)
                                     if not color then
                                         return
                                     end
@@ -264,12 +274,19 @@ function ReaderFooter:_statusBarColorMenu(read)
     }
 end
 
-function ReaderFooter:_invertUnreadMenu()
+function ReaderFooter:_invertColorMenu(read)
+    local text = "Invert read color in night mode"
+    if not read then
+        text = "Invert unread color in night mode"
+    end
+    local setting = read and "progress_read_keep_inverted" or "progress_unread_keep_inverted"
+    local is_enabled = read and keep_read_inverted_enabled or keep_unread_inverted_enabled
+
     return {
-        text = _("Invert unread color in night mode"),
-        checked_func = keep_unread_inverted_enabled,
+        text = _(text),
+        checked_func = is_enabled,
         callback = function()
-            G_reader_settings:saveSetting("progress_unread_keep_inverted", not keep_unread_inverted_enabled())
+            G_reader_settings:saveSetting(setting, not is_enabled())
             self.progress_bar:_setColors(self.settings.progress_style_thin)
             self:refreshFooter(true)
         end,
@@ -293,7 +310,8 @@ function ReaderFooter:addToMainMenu(menu_items)
         end
         table.insert(item.sub_item_table, self:_statusBarColorMenu(true))
         table.insert(item.sub_item_table, self:_statusBarColorMenu(false))
-        table.insert(item.sub_item_table, self:_invertUnreadMenu())
+        table.insert(item.sub_item_table, self:_invertColorMenu(true))
+        table.insert(item.sub_item_table, self:_invertColorMenu(false))
     end
 end
 
