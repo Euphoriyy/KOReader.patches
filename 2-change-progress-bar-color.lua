@@ -33,7 +33,7 @@ function Settings:init(footer)
         local read, unread = colorAttrib(true), colorAttrib(false)
         return {
             [read] = "#808080",
-            [unread] = "#ffffff",
+            [unread] = "#c0c0c0",
         }
     end
 
@@ -164,7 +164,7 @@ function ProgressWidget:_setColors(thin)
     end
 
     if not unreadColor:match("^#%x%x%x%x?%x?%x?$") then
-        unreadColor = "#ffffff"
+        unreadColor = "#c0c0c0"
         Settings:setPersistent(thin, unread, unreadColor)
     end
 
