@@ -12,3 +12,16 @@ It can be configured under **🞂 Screen 🞂 Frontlight refresh** on the <sub><
 This patch adds dispatcher actions (assignable to gestures) for going to the next or previous page in filemanager.
 
 Made for [kobo.koplugin](https://github.com/OGKevin/kobo.koplugin).
+
+### [🞂 2-change-progress-bar-color.lua](2-change-progress-bar-color.lua)
+This patch adds the ability to change the RGB color of the reader progress bar.
+
+It can be configured under **🞂 Status bar 🞂 Progress bar 🞂 Thickness, height & colors:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+
+It adds two menu options: the read and unread colors.
+
+This version specifically adds the following features:
+- Night mode color correction (the same colors even in night mode)
+- Setting persistence (the colors stay the same even after restarts)
+
+Based off of [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4) by [IntrovertedMage](https://github.com/IntrovertedMage).
