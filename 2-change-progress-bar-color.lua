@@ -1,7 +1,14 @@
--- Based on https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4
+--[[
+    This user patch allows for changing the progress bar read & unread colors.
+    It has menu options for the read and unread colors, and toggles to invert them in night mode.
 
--- Added night mode color correction
--- Added reader settings persistence
+    Source:
+    -- Based on https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4
+
+    Changes:
+    -- Added night mode color correction
+    -- Added reader settings persistence
+--]]
 
 local ReaderFooter = require("apps/reader/modules/readerfooter")
 local ProgressWidget = require("ui/widget/progresswidget")
