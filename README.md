@@ -18,7 +18,7 @@ This patch adds the ability to change the RGB color of the reader progress bar.
 
 It can be configured under **🞂 Status bar 🞂 Progress bar 🞂 Thickness, height & colors:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
-It adds two menu options: the read and unread colors.
+It adds three menu options: the read and unread colors, and whether or not to invert the unread color in night mode.
 
 This version specifically adds the following features:
 - Night mode color correction (the same colors even in night mode)

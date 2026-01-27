@@ -71,6 +71,10 @@ function Settings:setPersistent(thin, color_attrib, color)
     self:set(thin, color_attrib, color)
 end
 
+local function keep_unread_inverted_enabled()
+    return G_reader_settings:isTrue("progress_unread_keep_inverted", true)
+end
+
 -- Helper: detect night mode
 local function is_night_mode()
     return G_reader_settings:isTrue("night_mode")
@@ -103,7 +107,9 @@ function ReaderFooter:onToggleNightMode()
 
     if not is_night_mode() then
         readColor = invertColor(readColor)
-        unreadColor = invertColor(unreadColor)
+        if not keep_unread_inverted_enabled() then
+            unreadColor = invertColor(unreadColor)
+        end
     end
 
     self.progress_bar[read]   = Blitbuffer.colorFromString(readColor)
@@ -120,7 +126,9 @@ function ReaderFooter:onSetNightMode(night_mode)
 
     if night_mode then
         readColor = invertColor(readColor)
-        unreadColor = invertColor(unreadColor)
+        if not keep_unread_inverted_enabled() then
+            unreadColor = invertColor(unreadColor)
+        end
     end
 
     self.progress_bar[read]   = Blitbuffer.colorFromString(readColor)
@@ -153,8 +161,10 @@ function ProgressWidget:_setColors(thin)
     end
 
     if is_night_mode() then
-        readColor   = invertColor(readColor)
-        unreadColor = invertColor(unreadColor)
+        readColor = invertColor(readColor)
+        if not keep_unread_inverted_enabled() then
+            unreadColor = invertColor(unreadColor)
+        end
     end
 
     self[read]   = Blitbuffer.colorFromString(readColor)
@@ -254,6 +264,18 @@ function ReaderFooter:_statusBarColorMenu(read)
     }
 end
 
+function ReaderFooter:_invertUnreadMenu()
+    return {
+        text = _("Invert unread color in night mode"),
+        checked_func = keep_unread_inverted_enabled,
+        callback = function()
+            G_reader_settings:saveSetting("progress_unread_keep_inverted", not keep_unread_inverted_enabled())
+            self.progress_bar:_setColors(self.settings.progress_style_thin)
+            self:refreshFooter(true)
+        end,
+    }
+end
+
 local original_ReaderFooter_addToMainMenu = ReaderFooter.addToMainMenu
 
 function ReaderFooter:addToMainMenu(menu_items)
@@ -271,6 +293,7 @@ function ReaderFooter:addToMainMenu(menu_items)
         end
         table.insert(item.sub_item_table, self:_statusBarColorMenu(true))
         table.insert(item.sub_item_table, self:_statusBarColorMenu(false))
+        table.insert(item.sub_item_table, self:_invertUnreadMenu())
     end
 end
 
