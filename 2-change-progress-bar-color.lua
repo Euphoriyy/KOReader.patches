@@ -252,11 +252,21 @@ function ReaderFooter:_statusBarColorMenu(read)
                                     if not text:match("^#%x%x%x%x?%x?%x?$") then
                                         return
                                     end
-                                    local displayText = is_night_mode() and invertColor(text) or text
+
+                                    -- Process color depending on if the color should be inverted in night mode
+                                    local displayText = text
+                                    if is_night_mode() then
+                                        if (read and not keep_read_inverted_enabled()) or
+                                            (not read and not keep_unread_inverted_enabled()) then
+                                            displayText = invertColor(text)
+                                        end
+                                    end
                                     local color = Blitbuffer.colorFromString(displayText)
+
                                     if not color then
                                         return
                                     end
+
                                     Settings:setPersistent(self.settings.progress_style_thin, color_attrib, text)
                                     self.progress_bar[color_attrib] = color
                                     touchmenu_instance:updateItems()
