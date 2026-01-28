@@ -295,11 +295,14 @@ end
 local original_TextWidget_paintTo = TextWidget.paintTo
 
 function TextWidget:paintTo(bb, x, y)
+    local original_fgcolor = self.fgcolor
+
     self.fgcolor = cached.fgcolor
 
     -- Use original B/W TextWidget painting method if color is not enabled
     if not Screen:isColorEnabled() then
         original_TextWidget_paintTo(self, bb, x, y)
+        self.fgcolor = original_fgcolor
     else
         self:updateSize()
         if self._is_empty then
@@ -341,15 +344,21 @@ function TextWidget:paintTo(bb, x, y)
             pen_x = pen_x + xglyph.x_advance -- use Harfbuzz advance
         end
     end
+
+    self.fgcolor = original_fgcolor
 end
 
 -- Hook into TextBoxWidget text rendering
 local original_TextBoxWidget_renderText = TextBoxWidget._renderText
 
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
+    local original_fgcolor = self.fgcolor
+
     if cached.set_textbox_colors then
         self.fgcolor = cached.fgcolor
     end
 
     original_TextBoxWidget_renderText(self, start_row_idx, end_row_idx)
+
+    self.fgcolor = original_fgcolor
 end
