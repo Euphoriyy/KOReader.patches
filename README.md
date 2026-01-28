@@ -13,7 +13,7 @@ This patch adds dispatcher actions (assignable to gestures) for going to the nex
 
 Made for [kobo.koplugin](https://github.com/OGKevin/kobo.koplugin).
 
-### [🞂 2-change-progress-bar-color.lua](2-change-progress-bar-color.lua)
+### [🞂 2-progress-bar-color.lua](2-progress-bar-color.lua)
 This patch adds the ability to change the RGB color of the reader progress bar.
 
 It can be configured under **🞂 Status bar 🞂 Progress bar 🞂 Thickness, height & colors:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
