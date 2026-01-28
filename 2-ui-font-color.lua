@@ -1,6 +1,6 @@
 --[[
     This user patch allows for changing the UI font color.
-    It has menu options for the color and a toggle to invert it in night mode.
+    It has menu options for the color, a toggle to invert it in night mode, and a toggle for TextBoxWidgets.
     Optionally, the color can be set with a color picker.
 --]]
 
@@ -22,6 +22,7 @@ end
 -- Settings
 local HexFontColor = Setting("ui_font_color_hex", "#000000")    -- RGB hex for UI font color (default: #000000)
 local InvertFontColor = Setting("ui_font_color_inverted", true) -- Whether the UI font color should be inverted in night mode (default: true)
+local TextBoxFontColor = Setting("ui_font_color_textbox", true) -- Whether the font color of TextBoxWidgets should be changed (default: true)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -94,6 +95,7 @@ end
 local cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
     invert_color = InvertFontColor.get(),
+    textbox_color = TextBoxFontColor.get(),
     hex = HexFontColor.get(),
     last_hex = nil,
     fgcolor = nil,
@@ -233,6 +235,15 @@ local function font_color_menu()
                     recomputeFGColor()
                 end,
             })
+
+            table.insert(items, {
+                text = _("Apply to text boxes (CoverBrowser)"),
+                checked_func = TextBoxFontColor.get,
+                callback = function()
+                    TextBoxFontColor.toggle()
+                    cached.textbox_color = TextBoxFontColor.get()
+                end,
+            })
             return items
         end,
     }
@@ -325,7 +336,9 @@ end
 local original_TextBoxWidget_renderText = TextBoxWidget._renderText
 
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
-    self.fgcolor = cached.fgcolor
+    if cached.textbox_color then
+        self.fgcolor = cached.fgcolor
+    end
 
     original_TextBoxWidget_renderText(self, start_row_idx, end_row_idx)
 end

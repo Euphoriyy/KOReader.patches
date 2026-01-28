@@ -35,7 +35,7 @@ This patch adds the ability to change the RGB color of the UI font.
 
 It can be configured under **🞂 UI font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
-It has options for the color and a toggle to invert it in night mode.
+It has options for the color, a toggle to invert it in night mode, and a toggle for TextBoxWidgets (affects CoverBrowser).
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
