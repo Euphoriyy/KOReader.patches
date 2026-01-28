@@ -7,6 +7,7 @@
 local Blitbuffer = require("ffi/blitbuffer")
 local RenderText = require("ui/rendertext")
 local Screen = require("device").screen
+local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 
@@ -318,4 +319,13 @@ function TextWidget:paintTo(bb, x, y)
             pen_x = pen_x + xglyph.x_advance -- use Harfbuzz advance
         end
     end
+end
+
+-- Hook into TextBoxWidget text rendering
+local original_TextBoxWidget_renderText = TextBoxWidget._renderText
+
+function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
+    self.fgcolor = cached.fgcolor
+
+    original_TextBoxWidget_renderText(self, start_row_idx, end_row_idx)
 end
