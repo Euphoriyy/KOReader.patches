@@ -26,6 +26,8 @@ This version specifically adds the following features:
 
 Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4) by [IntrovertedMage](https://github.com/IntrovertedMage).
 
+<img src="img/progress-bar-color.png" style="width:80%; height:auto;">
+
 ### [🞂 2-ui-font-color.lua](2-ui-font-color.lua)
 This patch adds the ability to change the RGB color of the UI font.
 
@@ -34,6 +36,8 @@ It can be configured under **🞂 UI font color:** on the <sub><img src="img/app
 It has options for the color and a toggle to invert it in night mode.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
+
+<img src="img/ui-font-color.png" style="width:80%; height:auto;">
 
 ## Widgets
 
@@ -56,3 +60,5 @@ The options are:
 - `invert_in_night_mode`
 - `cancel_text`
 - `apply_text`
+
+<img src="img/colorwheelwidget.png" style="width:25%; height:auto;">
