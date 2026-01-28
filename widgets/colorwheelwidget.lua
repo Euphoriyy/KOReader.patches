@@ -292,9 +292,9 @@ function ColorWheelWidget:update()
     local value_group = HorizontalGroup:new {
         align = "center",
         value_minus,
-        HorizontalSpan:new { width = Size.padding.default },
+        HorizontalSpan:new { width = Size.padding.large },
         value_label,
-        HorizontalSpan:new { width = Size.padding.default },
+        HorizontalSpan:new { width = Size.padding.large },
         value_plus,
     }
 
@@ -400,7 +400,7 @@ function ColorWheelWidget:update()
             },
             preview_group,
         },
-        VerticalSpan:new { width = Size.padding.large },
+        VerticalSpan:new { width = Size.padding.large * 2 },
         CenterContainer:new {
             dimen = Geom:new {
                 w = self.width,
