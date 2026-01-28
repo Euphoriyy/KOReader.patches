@@ -5,6 +5,7 @@
 --]]
 
 local Blitbuffer = require("ffi/blitbuffer")
+local FileManager = require("apps/filemanager/filemanager")
 local RenderText = require("ui/rendertext")
 local Screen = require("device").screen
 local TextBoxWidget = require("ui/widget/textboxwidget")
@@ -95,7 +96,7 @@ end
 local cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
     invert_color = InvertFontColor.get(),
-    textbox_color = TextBoxFontColor.get(),
+    set_textbox_colors = TextBoxFontColor.get(),
     hex = HexFontColor.get(),
     last_hex = nil,
     fgcolor = nil,
@@ -111,6 +112,11 @@ local function recomputeFGColor()
     if hex ~= cached.last_hex then
         cached.fgcolor = Blitbuffer.colorFromString(hex)
         cached.last_hex = hex
+
+        -- If TextBoxWidget colors are enabled, then update the file list
+        if FileManager.instance and cached.set_textbox_colors then
+            FileManager.instance.file_chooser:updateItems(1, true)
+        end
     end
 end
 
@@ -241,7 +247,12 @@ local function font_color_menu()
                 checked_func = TextBoxFontColor.get,
                 callback = function()
                     TextBoxFontColor.toggle()
-                    cached.textbox_color = TextBoxFontColor.get()
+                    cached.set_textbox_colors = TextBoxFontColor.get()
+
+                    -- Update the file list
+                    if FileManager.instance then
+                        FileManager.instance.file_chooser:updateItems(1, true)
+                    end
                 end,
             })
             return items
@@ -336,7 +347,7 @@ end
 local original_TextBoxWidget_renderText = TextBoxWidget._renderText
 
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
-    if cached.textbox_color then
+    if cached.set_textbox_colors then
         self.fgcolor = cached.fgcolor
     end
 
