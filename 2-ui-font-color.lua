@@ -5,8 +5,8 @@
 --]]
 
 local Blitbuffer = require("ffi/blitbuffer")
-local Device = require("device")
 local RenderText = require("ui/rendertext")
+local Screen = require("device").screen
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 
@@ -274,9 +274,9 @@ local original_TextWidget_paintTo = TextWidget.paintTo
 function TextWidget:paintTo(bb, x, y)
     self.fgcolor = cached.fgcolor
 
-    -- Use original B/W TextWidget painting method if color is not supported
-    if not Device:hasColorScreen() then
-        original_TextWidget_paintTo(bb, x, y)
+    -- Use original B/W TextWidget painting method if color is not enabled
+    if not Screen:isColorEnabled() then
+        original_TextWidget_paintTo(self, bb, x, y)
     else
         self:updateSize()
         if self._is_empty then
