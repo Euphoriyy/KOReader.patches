@@ -117,10 +117,10 @@ function ReaderFooter:onToggleNightMode()
     local unreadColor = Settings:getPersistent(thin, unread)
 
     if not is_night_mode() then
-        if not keep_read_inverted_enabled() then
+        if not read_inverted_enabled() then
             readColor = invertColor(readColor)
         end
-        if not keep_unread_inverted_enabled() then
+        if not unread_inverted_enabled() then
             unreadColor = invertColor(unreadColor)
         end
     end
@@ -138,10 +138,10 @@ function ReaderFooter:onSetNightMode(night_mode)
     local unreadColor = Settings:getPersistent(thin, unread)
 
     if night_mode then
-        if not keep_read_inverted_enabled() then
+        if not read_inverted_enabled() then
             readColor = invertColor(readColor)
         end
-        if not keep_unread_inverted_enabled() then
+        if not unread_inverted_enabled() then
             unreadColor = invertColor(unreadColor)
         end
     end
@@ -176,10 +176,10 @@ function ProgressWidget:_setColors(thin)
     end
 
     if is_night_mode() then
-        if not keep_read_inverted_enabled() then
+        if not read_inverted_enabled() then
             readColor = invertColor(readColor)
         end
-        if not keep_unread_inverted_enabled() then
+        if not unread_inverted_enabled() then
             unreadColor = invertColor(unreadColor)
         end
     end
@@ -263,8 +263,8 @@ function ReaderFooter:_statusBarColorMenu(read)
                                     -- Process color depending on if the color should be inverted in night mode
                                     local displayText = text
                                     if is_night_mode() then
-                                        if (read and not keep_read_inverted_enabled()) or
-                                            (not read and not keep_unread_inverted_enabled()) then
+                                        if (read and not read_inverted_enabled()) or
+                                            (not read and not unread_inverted_enabled()) then
                                             displayText = invertColor(text)
                                         end
                                     end
