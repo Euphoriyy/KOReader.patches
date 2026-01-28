@@ -24,6 +24,8 @@ This version specifically adds the following features:
 - Night mode color correction (the same colors even in night mode)
 - Setting persistence (the colors stay the same even after restarts)
 
+Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the colors to be picked visually.
+
 Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4) by [IntrovertedMage](https://github.com/IntrovertedMage).
 
 <img src="img/progress-bar-color.png" style="width:80%; height:auto;">

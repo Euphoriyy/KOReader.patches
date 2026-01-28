@@ -1,6 +1,7 @@
 --[[
     This user patch allows for changing the progress bar read & unread colors.
     It has menu options for the read and unread colors, and toggles to invert them in night mode.
+    Optionally, the colors can be set with a color picker.
 
     Source:
     -- Based on https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4
@@ -8,6 +9,7 @@
     Changes:
     -- Added night mode color correction
     -- Added reader settings persistence
+    -- Add support for picking colors visually using ColorWheelWidget
 --]]
 
 local ReaderFooter = require("apps/reader/modules/readerfooter")
@@ -100,6 +102,62 @@ local function invertColor(hex)
     if not r or not g or not b then return hex end
     -- Invert
     return string.format("#%02X%02X%02X", 255 - r, 255 - g, 255 - b)
+end
+
+-- Helper: convert hex color string "#RRGGBB" → HSV values
+local function hexToHSV(hex)
+    -- Remove # if present
+    hex = hex:gsub("#", "")
+
+    -- Parse RGB values
+    local r, g, b
+    if #hex == 6 then
+        -- Full form #RRGGBB
+        r = tonumber(hex:sub(1, 2), 16) / 255
+        g = tonumber(hex:sub(3, 4), 16) / 255
+        b = tonumber(hex:sub(5, 6), 16) / 255
+    elseif #hex == 3 then
+        -- Short form #RGB -> #RRGGBB
+        r = tonumber(hex:sub(1, 1), 16) / 15
+        g = tonumber(hex:sub(2, 2), 16) / 15
+        b = tonumber(hex:sub(3, 3), 16) / 15
+    else
+        -- Invalid format, return default (red)
+        return 0, 1, 1
+    end
+
+    -- RGB to HSV conversion
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local delta = max - min
+
+    -- Value (brightness)
+    local v = max
+
+    -- Saturation
+    local s = 0
+    if max > 0 then
+        s = delta / max
+    end
+
+    -- Hue
+    local h = 0
+    if delta > 0 then
+        if max == r then
+            h = 60 * (((g - b) / delta) % 6)
+        elseif max == g then
+            h = 60 * (((b - r) / delta) + 2)
+        else
+            h = 60 * (((r - g) / delta) + 4)
+        end
+    end
+
+    -- Normalize hue to 0-360
+    if h < 0 then
+        h = h + 360
+    end
+
+    return h, s, v
 end
 
 local original_init = ReaderFooter.init
@@ -224,19 +282,26 @@ local function getMenuItem(menu, ...) -- path
     return item
 end
 
+local has_ColorWheelWidget, ColorWheelWidget = pcall(require, "ui/widget/colorwheelwidget")
+
 function ReaderFooter:_statusBarColorMenu(read)
     InputDialog = require("ui/widget/inputdialog")
     local color_attrib = colorAttrib(read)
     return {
         text_func = function()
-            return T(read and "Read color: %1" or "Unread color: %1",
-                Settings:getPersistent(self.settings.progress_style_thin, color_attrib))
+            local color = Settings:getPersistent(self.settings.progress_style_thin, color_attrib)
+            local format = read and "Read color: %1" or "Unread color: %1"
+            if has_ColorWheelWidget then
+                return T(format .. " (hold to pick)", color)
+            end
+            return T(format, color)
         end,
         keep_menu_open = true,
         enabled_func = function()
             return not self.settings.disable_progress_bar
         end,
         callback = function(touchmenu_instance)
+            local inverted_enabled = read and read_inverted_enabled() or unread_inverted_enabled()
             local input_dialog
             input_dialog = InputDialog:new({
                 title = "Enter color hex code for " .. (read and "read color" or "unread color"),
@@ -261,14 +326,13 @@ function ReaderFooter:_statusBarColorMenu(read)
                                     end
 
                                     -- Process color depending on if the color should be inverted in night mode
-                                    local displayText = text
+                                    local display_text = text
                                     if is_night_mode() then
-                                        if (read and not read_inverted_enabled()) or
-                                            (not read and not unread_inverted_enabled()) then
-                                            displayText = invertColor(text)
+                                        if not inverted_enabled then
+                                            display_text = invertColor(text)
                                         end
                                     end
-                                    local color = Blitbuffer.colorFromString(displayText)
+                                    local color = Blitbuffer.colorFromString(display_text)
 
                                     if not color then
                                         return
@@ -288,6 +352,51 @@ function ReaderFooter:_statusBarColorMenu(read)
             UIManager:show(input_dialog)
             input_dialog:onShowKeyboard()
         end,
+        hold_callback = function(touchmenu_instance)
+            if not has_ColorWheelWidget then
+                return
+            end
+
+            local title_text = read and "Pick read color" or "Pick unread color"
+            local current_hex = Settings:getPersistent(self.settings.progress_style_thin, color_attrib)
+            local h, s, v = hexToHSV(current_hex)
+            local inverted_enabled = read and read_inverted_enabled() or unread_inverted_enabled()
+            local wheel
+            wheel = ColorWheelWidget:new({
+                title_text = title_text,
+                hue = h,
+                saturation = s,
+                value = v,
+                invert_in_night_mode = not inverted_enabled,
+                callback = function(new_hex)
+                    if new_hex ~= current_hex then
+                        -- Process color depending on if the color should be inverted in night mode
+                        local display_hex = new_hex
+                        if is_night_mode() then
+                            if not inverted_enabled then
+                                display_hex = invertColor(new_hex)
+                            end
+                        end
+                        local color = Blitbuffer.colorFromString(display_hex)
+
+                        if not color then
+                            UIManager:setDirty(nil, "ui")
+                            return
+                        end
+
+                        Settings:setPersistent(self.settings.progress_style_thin, color_attrib, new_hex)
+                        self.progress_bar[color_attrib] = color
+                        touchmenu_instance:updateItems()
+                        self:refreshFooter(true)
+                    end
+                    UIManager:setDirty(nil, "ui")
+                end,
+                cancel_callback = function()
+                    UIManager:setDirty(nil, "ui")
+                end,
+            })
+            UIManager:show(wheel)
+        end
     }
 end
 
