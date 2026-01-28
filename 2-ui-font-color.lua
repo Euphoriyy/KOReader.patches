@@ -104,14 +104,12 @@ local T = require("ffi/util").template
 local function set_color_menu()
     InputDialog = require("ui/widget/inputdialog")
     return {
-        text_func = function()
-            return T(_("Enter color code: %1"), HexFontColor.get())
-        end,
+        text = _("Enter color code"),
         keep_menu_open = true,
         callback = function(touchmenu_instance)
             local input_dialog
             input_dialog = InputDialog:new({
-                title = "Enter color hex code for UI font",
+                title = "Enter custom color code",
                 input = HexFontColor.get(),
                 input_hint = "#000000",
                 buttons = {
@@ -186,8 +184,14 @@ local function font_color_menu()
             return T(_("UI font color: %1"), HexFontColor.get())
         end,
         sub_item_table_func = function()
-            local items = {}
-            table.insert(items, set_color_menu())
+            local items = {
+                {
+                    text_func = function()
+                        return T(_("Current color: %1"), HexFontColor.get())
+                    end,
+                },
+                set_color_menu(),
+            }
 
             -- Add color picking menu if color wheel widget is present
             if has_ColorWheelWidget then
