@@ -22,11 +22,6 @@ end
 local HexFontColor = Setting("ui_font_color_hex", "#000000")    -- RGB hex for UI font color (default: #000000)
 local InvertFontColor = Setting("ui_font_color_inverted", true) -- Whether the UI font color should be inverted in night mode (default: true)
 
--- Helper: detect night mode
-local function is_night_mode()
-    return G_reader_settings:isTrue("night_mode")
-end
-
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
     -- Remove the "#" and parse as R, G, B
@@ -94,6 +89,36 @@ local function hexToHSV(hex)
     return h, s, v
 end
 
+-- Cache
+local cached = {
+    night_mode = G_reader_settings:isTrue("night_mode"),
+    invert_color = InvertFontColor.get(),
+    hex = HexFontColor.get(),
+    last_hex = nil,
+    fgcolor = nil,
+}
+
+-- Recompute and cache the final fgcolor based on current settings
+-- Applies night mode inversion if enabled, and updates cached.fgcolor only if it has changed
+local function recomputeFGColor()
+    local hex = cached.hex
+    if cached.night_mode and not cached.invert_color then
+        hex = invertColor(hex)
+    end
+    if hex ~= cached.last_hex then
+        cached.fgcolor = Blitbuffer.colorFromString(hex)
+        cached.last_hex = hex
+    end
+end
+
+-- Compute and cache the initial fgcolor based on current settings
+recomputeFGColor()
+
+local function setFontColor(hex)
+    HexFontColor.set(hex)
+    cached.hex = hex
+    recomputeFGColor()
+end
 
 -- Patch menus
 local FileManagerMenu = require("apps/filemanager/filemanagermenu")
@@ -130,7 +155,7 @@ local function set_color_menu()
                                         return
                                     end
 
-                                    HexFontColor.set(text)
+                                    setFontColor(text)
 
                                     touchmenu_instance:updateItems()
                                     UIManager:close(input_dialog)
@@ -161,8 +186,8 @@ local function pick_color_menu()
                 saturation = s,
                 value = v,
                 invert_in_night_mode = not InvertFontColor.get(),
-                callback = function(color)
-                    HexFontColor.set(color)
+                callback = function(hex)
+                    setFontColor(hex)
 
                     if touchmenu_instance then
                         touchmenu_instance:updateItems()
@@ -203,6 +228,8 @@ local function font_color_menu()
                 checked_func = InvertFontColor.get,
                 callback = function()
                     InvertFontColor.toggle()
+                    cached.invert_color = InvertFontColor.get()
+                    recomputeFGColor()
                 end,
             })
             return items
@@ -228,15 +255,24 @@ function ReaderMenu:setUpdateItemTable()
     original_ReaderMenu_setUpdateItemTable(self)
 end
 
+-- Hook into night mode state changes and update cache
+function TextWidget:onToggleNightMode()
+    cached.night_mode = not cached.night_mode
+    recomputeFGColor()
+end
+
+function TextWidget:onSetNightMode(night_mode)
+    if cached.night_mode ~= night_mode then
+        cached.night_mode = night_mode
+        recomputeFGColor()
+    end
+end
+
 -- Hook into TextWidget painting
 local original_TextWidget_paintTo = TextWidget.paintTo
 
 function TextWidget:paintTo(bb, x, y)
-    local hex = HexFontColor.get()
-    if is_night_mode() and not InvertFontColor.get() then
-        hex = invertColor(hex)
-    end
-    self.fgcolor = Blitbuffer.colorFromString(hex)
+    self.fgcolor = cached.fgcolor
 
     -- Use original B/W TextWidget painting method if color is not supported
     if not Device:hasColorScreen() then
