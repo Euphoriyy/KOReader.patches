@@ -112,21 +112,27 @@ local function recomputeFGColor()
     if hex ~= cached.last_hex then
         cached.fgcolor = Blitbuffer.colorFromString(hex)
         cached.last_hex = hex
-
-        -- If TextBoxWidget colors are enabled, then update the file list
-        if FileManager.instance and cached.set_textbox_colors then
-            FileManager.instance.file_chooser:updateItems(1, true)
-        end
     end
 end
 
 -- Compute and cache the initial fgcolor based on current settings
 recomputeFGColor()
 
+local function refreshFileManager()
+    if FileManager.instance then
+        FileManager.instance.file_chooser:updateItems(1, true)
+    end
+end
+
 local function setFontColor(hex)
     HexFontColor.set(hex)
     cached.hex = hex
     recomputeFGColor()
+
+    -- If TextBoxWidget colors are enabled, then update the file list
+    if cached.set_textbox_colors then
+        refreshFileManager()
+    end
 end
 
 -- Patch menus
@@ -239,6 +245,10 @@ local function font_color_menu()
                     InvertFontColor.toggle()
                     cached.invert_color = InvertFontColor.get()
                     recomputeFGColor()
+
+                    if cached.set_textbox_colors then
+                        refreshFileManager()
+                    end
                 end,
             })
 
@@ -250,9 +260,7 @@ local function font_color_menu()
                     cached.set_textbox_colors = TextBoxFontColor.get()
 
                     -- Update the file list
-                    if FileManager.instance then
-                        FileManager.instance.file_chooser:updateItems(1, true)
-                    end
+                    refreshFileManager()
                 end,
             })
             return items
@@ -279,15 +287,31 @@ function ReaderMenu:setUpdateItemTable()
 end
 
 -- Hook into night mode state changes and update cache
-function TextWidget:onToggleNightMode()
+local original_UIManager_ToggleNightMode = UIManager.ToggleNightMode
+
+function UIManager:ToggleNightMode()
+    original_UIManager_ToggleNightMode(self)
+
     cached.night_mode = not cached.night_mode
     recomputeFGColor()
+
+    if cached.set_textbox_colors then
+        refreshFileManager()
+    end
 end
 
-function TextWidget:onSetNightMode(night_mode)
+local original_UIManager_SetNightMode = UIManager.SetNightMode
+
+function UIManager:SetNightMode(night_mode)
+    original_UIManager_SetNightMode(self)
+
     if cached.night_mode ~= night_mode then
         cached.night_mode = night_mode
         recomputeFGColor()
+
+        if cached.set_textbox_colors then
+            refreshFileManager()
+        end
     end
 end
 
