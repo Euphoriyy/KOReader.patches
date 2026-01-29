@@ -95,7 +95,7 @@ end
 -- Cache
 local cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
-    invert_color = InvertFontColor.get(),
+    invert_in_night_mode = InvertFontColor.get(),
     set_textbox_colors = TextBoxFontColor.get(),
     hex = HexFontColor.get(),
     last_hex = nil,
@@ -106,7 +106,7 @@ local cached = {
 -- Applies night mode inversion if enabled, and updates cached.fgcolor only if it has changed
 local function recomputeFGColor()
     local hex = cached.hex
-    if cached.night_mode and not cached.invert_color then
+    if cached.night_mode and not cached.invert_in_night_mode then
         hex = invertColor(hex)
     end
     if hex ~= cached.last_hex then
@@ -243,7 +243,7 @@ local function font_color_menu()
                 checked_func = InvertFontColor.get,
                 callback = function()
                     InvertFontColor.toggle()
-                    cached.invert_color = InvertFontColor.get()
+                    cached.invert_in_night_mode = InvertFontColor.get()
                     recomputeFGColor()
 
                     if cached.set_textbox_colors then
