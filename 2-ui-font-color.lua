@@ -295,7 +295,8 @@ function UIManager:ToggleNightMode()
     cached.night_mode = not cached.night_mode
     recomputeFGColor()
 
-    if cached.set_textbox_colors then
+    -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
+    if cached.set_textbox_colors and not cached.invert_in_night_mode then
         refreshFileManager()
     end
 end
@@ -309,7 +310,7 @@ function UIManager:SetNightMode(night_mode)
         cached.night_mode = night_mode
         recomputeFGColor()
 
-        if cached.set_textbox_colors then
+        if cached.set_textbox_colors and not cached.invert_in_night_mode then
             refreshFileManager()
         end
     end
