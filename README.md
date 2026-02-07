@@ -41,6 +41,21 @@ Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing 
 
 <img src="img/ui-font-color.png" style="width:80%; height:auto;">
 
+### [🞂 2-ui-background-color.lua](2-ui-background-color.lua)
+This patch adds the ability to change the RGB color of the UI background.
+
+It is most recommended for non-e-ink devices for visiblity and refresh clarity, but it works fine on color e-ink (and B/W e-ink for selecting shades of gray). It is also best used together with [2-ui-font-color.lua](#-2-ui-font-colorlua) for best contrast.
+
+It can be configured under **🞂 UI background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+
+It has options for the color, a toggle to invert it in night mode, a toggle for TextBoxWidgets (affects CoverBrowser), and a toggle for the ReaderFooter.
+
+Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
+
+<img src="img/ui-background-color-1.png" style="width:80%; height:auto;">
+
+<img src="img/ui-background-color-2.png" style="width:80%; height:auto;">
+
 ## Widgets
 
 Widgets allow for additional functionality for patches. Developers use them to provide unique ways to configure options.
@@ -63,4 +78,4 @@ The options are:
 - `cancel_text`
 - `apply_text`
 
-<img src="img/colorwheelwidget.png" style="width:25%; height:auto;">
+<img src="img/colorwheelwidget.png" style="width:50%; height:auto;">
