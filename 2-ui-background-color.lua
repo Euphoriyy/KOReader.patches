@@ -726,7 +726,7 @@ function UIManager:SetNightMode(night_mode)
     end
 end
 
--- Replace UnderlineContainer painting (RGB)
+-- Replace UnderlineContainer painting
 function UnderlineContainer:paintTo(bb, x, y)
     local container_size = self:getSize()
     if not self.dimen then
@@ -754,8 +754,12 @@ function UnderlineContainer:paintTo(bb, x, y)
         p_y = (container_size.h - content_size.h) + y
     end
     self[1]:paintTo(bb, x, p_y)
-    bb:paintRectRGB32(line_x, y + container_size.h - self.linesize,
-        line_width, self.linesize, bg_cached.bgcolor)
+
+    -- Only paint underline if its color is NOT white
+    if not colorEquals(self.color, Blitbuffer.COLOR_WHITE) then
+        bb:paintRect(line_x, y + container_size.h - self.linesize,
+            line_width, self.linesize, self.color)
+    end
 end
 
 -- Hook into TextBoxWidget text rendering
