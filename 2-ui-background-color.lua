@@ -1,3 +1,12 @@
+--[[
+    This user patch allows for changing the UI background color.
+    It has the following menu options in addition to the color:
+        - A toggle to invert it in night mode.
+        - A toggle for affecting TextBoxWidgets.
+        - A toggle for affecting the ReaderFooter.
+    Optionally, the color can be set with a color picker.
+--]]
+
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Cache = require("cache")
@@ -27,6 +36,7 @@ local function Setting(name, default)
     return self
 end
 
+-- Settings
 local HexBackgroundColor = Setting("ui_background_color_hex", "#ffffff")          -- RGB hex for UI background color (default: #ffffff)
 local InvertBackgroundColor = Setting("ui_background_color_inverted", true)       -- Whether the UI background color should be inverted in night mode (default: true)
 local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)       -- Whether the background color of TextBoxWidgets should be changed (default: true)
@@ -105,7 +115,10 @@ local function colorEquals(c1, c2)
     return c1:getColorRGB32() == c2:getColorRGB32()
 end
 
--- ImageWidget specific
+------------------------------------------------------------
+-- ImageWidget specific code
+------------------------------------------------------------
+
 -- DPI_SCALE can't change without a restart, so let's compute it now
 local function get_dpi_scale()
     local size_scale = math.min(Screen:getWidth(), Screen:getHeight()) * (1 / 600)
@@ -131,6 +144,10 @@ local uint8pt = ffi.typeof("uint8_t*")
 local P_Color8A = ffi.typeof("Color8A*")
 local P_ColorRGB16 = ffi.typeof("ColorRGB16*")
 local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
+
+--------------------------------------------
+-- Background Color
+--------------------------------------------
 
 -- Cache
 local bg_cached = {
@@ -373,7 +390,7 @@ function FrameContainer:paintTo(bb, x, y)
     self.color = original_color
 end
 
--- Exclude footer background color changes if option is not sett
+-- Exclude footer background color changes if option is not set
 local original_ReaderFooter_updateFooterContainer = ReaderFooter.updateFooterContainer
 
 function ReaderFooter:updateFooterContainer()
@@ -774,7 +791,7 @@ function LineWidget:paintTo(bb, x, y)
     self.background = original_background
 end
 
--- Adjust InputText frame color
+-- Adjust InputText frame color to match background
 local original_InputText_initTextBox = InputText.initTextBox
 
 function InputText:initTextBox(text, char_added)
@@ -782,7 +799,9 @@ function InputText:initTextBox(text, char_added)
 
     self.focused_color = bg_cached.bgcolor:invert()
     self.unfocused_color = Blitbuffer.ColorRGB32(
-        self.focused_color:getR() * 0.5, self.focused_color:getG() * 0.5, self.focused_color:getB() * 0.5
+        self.focused_color:getR() * 0.5,
+        self.focused_color:getG() * 0.5,
+        self.focused_color:getB() * 0.5
     )
 
     self._frame_textwidget.color = self.focused and self.focused_color or self.unfocused_color
