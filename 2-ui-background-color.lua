@@ -6,6 +6,7 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local IconWidget = require("ui/widget/iconwidget")
 local ImageWidget = require("ui/widget/imagewidget")
+local InputText = require("ui/widget/inputtext")
 local LineWidget = require("ui/widget/linewidget")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
 local RenderImage = require("ui/renderimage")
@@ -372,7 +373,7 @@ function FrameContainer:paintTo(bb, x, y)
     self.color = original_color
 end
 
--- Exclude footer background color changes if option is not set
+-- Exclude footer background color changes if option is not sett
 local original_ReaderFooter_updateFooterContainer = ReaderFooter.updateFooterContainer
 
 function ReaderFooter:updateFooterContainer()
@@ -771,4 +772,30 @@ function LineWidget:paintTo(bb, x, y)
     original_LineWidget_paintTo(self, bb, x, y)
 
     self.background = original_background
+end
+
+-- Adjust InputText frame color
+local original_InputText_initTextBox = InputText.initTextBox
+
+function InputText:initTextBox(text, char_added)
+    original_InputText_initTextBox(self, text, char_added)
+
+    self.focused_color = bg_cached.bgcolor:invert()
+    self.unfocused_color = Blitbuffer.ColorRGB32(
+        self.focused_color:getR() * 0.5, self.focused_color:getG() * 0.5, self.focused_color:getB() * 0.5
+    )
+
+    self._frame_textwidget.color = self.focused and self.focused_color or self.unfocused_color
+end
+
+function InputText:unfocus()
+    self.focused = false
+    self.text_widget:unfocus()
+    self._frame_textwidget.color = self.unfocused_color
+end
+
+function InputText:focus()
+    self.focused = true
+    self.text_widget:focus()
+    self._frame_textwidget.color = self.focused_color
 end
