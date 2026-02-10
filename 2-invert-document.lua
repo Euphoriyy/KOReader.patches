@@ -2,6 +2,7 @@
     This user patch adds a document option to invert the document in night mode.
 --]]
 
+local Dispatcher = require("dispatcher")
 local Document = require("document/document")
 local KoptInterface = require("document/koptinterface")
 local KoptOptions = require("ui/data/koptoptions")
@@ -90,3 +91,8 @@ function KoptInterface:drawPage(doc, target, x, y, rect, pageno, zoom, rotation,
         Document.drawPage(doc, target, x, y, rect, pageno, zoom, rotation, gamma)
     end
 end
+
+Dispatcher:registerAction("kopt_nightmode_document", {
+    category = "configurable",
+    paging = true,
+})
