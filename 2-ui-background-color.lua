@@ -10,9 +10,11 @@
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Cache = require("cache")
+local DrawContext = require("ffi/drawcontext")
 local FileManager = require("apps/filemanager/filemanager")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
+local HtmlBoxWidget = require("ui/widget/htmlboxwidget")
 local IconWidget = require("ui/widget/iconwidget")
 local ImageWidget = require("ui/widget/imagewidget")
 local InputText = require("ui/widget/inputtext")
@@ -821,4 +823,33 @@ function InputText:focus()
     self.focused = true
     self.text_widget:focus()
     self._frame_textwidget.color = self.focused_color
+end
+
+-- Add background color to HTMLBoxWidgets (ReaderDictionary)
+-- Alternative is to inject dict css with background-color, but that may conflict
+function HtmlBoxWidget:_render()
+    if self.bb then
+        return
+    end
+    local page = self.document:openPage(self.page_number)
+    self.document:setColorRendering(Screen:isColorEnabled())
+    local dc = DrawContext.new()
+    self.bb = page:draw_new(dc, self.dimen.w, self.dimen.h, 0, 0)
+    page:close()
+
+    -- Replace white with custom background color
+    local bg = bg_cached.bgcolor
+    for y = 0, self.dimen.h - 1 do
+        for x = 0, self.dimen.w - 1 do
+            if colorEquals(self.bb:getPixel(x, y), Blitbuffer.COLOR_WHITE) then
+                self.bb:setPixel(x, y, bg)
+            end
+        end
+    end
+
+    if self.highlight_text_selection and self.highlight_rects then
+        for _, rect in ipairs(self.highlight_rects) do
+            self.bb:darkenRect(rect.x, rect.y, rect.w, rect.h, self.highlight_lighten_factor)
+        end
+    end
 end
