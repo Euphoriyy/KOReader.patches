@@ -10,7 +10,7 @@
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Cache = require("cache")
-local DrawContext = require("ffi/drawcontext")
+local DictQuickLookup = require("ui/widget/dictquicklookup")
 local FileManager = require("apps/filemanager/filemanager")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
@@ -825,31 +825,51 @@ function InputText:focus()
     self._frame_textwidget.color = self.focused_color
 end
 
--- Add background color to HTMLBoxWidgets (ReaderDictionary)
--- Alternative is to inject dict css with background-color, but that may conflict
+-- Hook into HTMLBoxWidget rendering (DictQuickLookup) to add "flashui" refreshes to prevent ghosting
+local original_HtmlBoxWidget_render = HtmlBoxWidget._render
+
 function HtmlBoxWidget:_render()
-    if self.bb then
-        return
-    end
-    local page = self.document:openPage(self.page_number)
-    self.document:setColorRendering(Screen:isColorEnabled())
-    local dc = DrawContext.new()
-    self.bb = page:draw_new(dc, self.dimen.w, self.dimen.h, 0, 0)
-    page:close()
+    original_HtmlBoxWidget_render(self)
 
-    -- Replace white with custom background color
-    local bg = bg_cached.bgcolor
-    for y = 0, self.dimen.h - 1 do
-        for x = 0, self.dimen.w - 1 do
-            if colorEquals(self.bb:getPixel(x, y), Blitbuffer.COLOR_WHITE) then
-                self.bb:setPixel(x, y, bg)
-            end
-        end
+    -- Check for non-white background color
+    if string.lower(bg_cached.hex) ~= "#ffffff" then
+        UIManager:setDirty(self.dialog or "all", function()
+            return "flashui", self.dimen
+        end)
     end
+end
 
-    if self.highlight_text_selection and self.highlight_rects then
-        for _, rect in ipairs(self.highlight_rects) do
-            self.bb:darkenRect(rect.x, rect.y, rect.w, rect.h, self.highlight_lighten_factor)
-        end
+-- Add background color CSS to HTML dictionary
+function DictQuickLookup:getHtmlDictionaryCss()
+    local css_justify = G_reader_settings:nilOrTrue("dict_justify") and "text-align: justify;" or ""
+    local bg_hex = bg_cached.hex
+    if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
+        bg_hex = invertColor(bg_hex)
     end
+    local css = [[
+        @page {
+            margin: 0;
+            font-family: 'Noto Sans';
+        }
+
+        body {
+            margin: 0;
+            line-height: 1.3;
+            ]] .. css_justify .. [[
+            background-color: ]] .. bg_hex .. [[;
+        }
+
+        blockquote, dd {
+            margin: 0 1em;
+        }
+
+        ol, ul, menu {
+            margin: 0; padding: 0 1.7em;
+        }
+    ]]
+
+    if self.css then
+        return css .. self.css
+    end
+    return css
 end
