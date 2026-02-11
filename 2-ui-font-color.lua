@@ -5,6 +5,7 @@
 --]]
 
 local Blitbuffer = require("ffi/blitbuffer")
+local DictQuickLookup = require("ui/widget/dictquicklookup")
 local FileManager = require("apps/filemanager/filemanager")
 local RenderText = require("ui/rendertext")
 local Screen = require("device").screen
@@ -24,6 +25,7 @@ end
 local HexFontColor = Setting("ui_font_color_hex", "#000000")    -- RGB hex for UI font color (default: #000000)
 local InvertFontColor = Setting("ui_font_color_inverted", true) -- Whether the UI font color should be inverted in night mode (default: true)
 local TextBoxFontColor = Setting("ui_font_color_textbox", true) -- Whether the font color of TextBoxWidgets should be changed (default: true)
+local DictionaryFontColor = Setting("ui_font_color_dict", true) -- Whether the font color of the dictionary should be changed (default: true)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -96,7 +98,8 @@ end
 local cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
     invert_in_night_mode = InvertFontColor.get(),
-    set_textbox_colors = TextBoxFontColor.get(),
+    set_textbox_color = TextBoxFontColor.get(),
+    set_dictionary_color = DictionaryFontColor.get(),
     hex = HexFontColor.get(),
     last_hex = nil,
     fgcolor = nil,
@@ -130,7 +133,7 @@ local function setFontColor(hex)
     recomputeFGColor()
 
     -- If TextBoxWidget colors are enabled, then update the file list
-    if cached.set_textbox_colors then
+    if cached.set_textbox_color then
         refreshFileManager()
     end
 end
@@ -246,7 +249,7 @@ local function font_color_menu()
                     cached.invert_in_night_mode = InvertFontColor.get()
                     recomputeFGColor()
 
-                    if cached.set_textbox_colors then
+                    if cached.set_textbox_color then
                         refreshFileManager()
                     end
                 end,
@@ -257,10 +260,19 @@ local function font_color_menu()
                 checked_func = TextBoxFontColor.get,
                 callback = function()
                     TextBoxFontColor.toggle()
-                    cached.set_textbox_colors = TextBoxFontColor.get()
+                    cached.set_textbox_color = TextBoxFontColor.get()
 
                     -- Update the file list
                     refreshFileManager()
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Apply to dictionary text"),
+                checked_func = DictionaryFontColor.get,
+                callback = function()
+                    DictionaryFontColor.toggle()
+                    cached.set_dictionary_color = DictionaryFontColor.get()
                 end,
             })
             return items
@@ -296,7 +308,7 @@ function UIManager:ToggleNightMode()
     recomputeFGColor()
 
     -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
-    if cached.set_textbox_colors and not cached.invert_in_night_mode then
+    if cached.set_textbox_color and not cached.invert_in_night_mode then
         refreshFileManager()
     end
 end
@@ -310,7 +322,7 @@ function UIManager:SetNightMode(night_mode)
         cached.night_mode = night_mode
         recomputeFGColor()
 
-        if cached.set_textbox_colors and not cached.invert_in_night_mode then
+        if cached.set_textbox_color and not cached.invert_in_night_mode then
             refreshFileManager()
         end
     end
@@ -379,11 +391,34 @@ local original_TextBoxWidget_renderText = TextBoxWidget._renderText
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
     local original_fgcolor = self.fgcolor
 
-    if cached.set_textbox_colors then
+    if cached.set_textbox_color then
         self.fgcolor = cached.fgcolor
     end
 
     original_TextBoxWidget_renderText(self, start_row_idx, end_row_idx)
 
     self.fgcolor = original_fgcolor
+end
+
+-- Add font color CSS to HTML dictionary
+local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDictionaryCss
+
+function DictQuickLookup:getHtmlDictionaryCss()
+    local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
+
+    if cached.set_dictionary_color then
+        local fg_hex = cached.hex
+        if cached.night_mode and not cached.invert_in_night_mode then
+            fg_hex = invertColor(fg_hex)
+        end
+        local custom_css = [[
+            body {
+                color: ]] .. fg_hex .. [[;
+            }
+        ]]
+
+        return original_css .. custom_css
+    else
+        return original_css
+    end
 end
