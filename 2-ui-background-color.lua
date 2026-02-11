@@ -840,36 +840,20 @@ function HtmlBoxWidget:_render()
 end
 
 -- Add background color CSS to HTML dictionary
+local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDictionaryCss
+
 function DictQuickLookup:getHtmlDictionaryCss()
-    local css_justify = G_reader_settings:nilOrTrue("dict_justify") and "text-align: justify;" or ""
+    local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
+
     local bg_hex = bg_cached.hex
     if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
         bg_hex = invertColor(bg_hex)
     end
-    local css = [[
-        @page {
-            margin: 0;
-            font-family: 'Noto Sans';
-        }
-
+    local custom_css = [[
         body {
-            margin: 0;
-            line-height: 1.3;
-            ]] .. css_justify .. [[
             background-color: ]] .. bg_hex .. [[;
-        }
-
-        blockquote, dd {
-            margin: 0 1em;
-        }
-
-        ol, ul, menu {
-            margin: 0; padding: 0 1.7em;
         }
     ]]
 
-    if self.css then
-        return css .. self.css
-    end
-    return css
+    return original_css .. custom_css
 end
