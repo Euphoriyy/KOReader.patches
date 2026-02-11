@@ -162,8 +162,8 @@ local bg_cached = {
     bgcolor = nil,
 }
 
--- Recompute and cache the final fgcolor based on current settings
--- Applies night mode inversion if enabled, and updates cached.fgcolor only if it has changed
+-- Recompute and cache the final bgcolor based on current settings
+-- Applies night mode inversion if enabled, and updates bg_cached.bgcolor only if it has changed
 local function recomputeBGColor()
     local hex = bg_cached.hex
     if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
@@ -175,7 +175,7 @@ local function recomputeBGColor()
     end
 end
 
--- Compute and cache the initial fgcolor based on current settings
+-- Compute and cache the initial bgcolor based on current settings
 recomputeBGColor()
 
 local function refreshFileManager()
@@ -447,7 +447,7 @@ local function fillRGB(bb, bbtype, v)
     else
         -- Should only be BBRGB24 & BB8 left, where we can use ffi.fill ;)
         local p = ffi.cast(uint8pt, bb.data)
-        ffi.fill(p, bb.stride * bb.h, v.a)
+        ffi.fill(p, bb.stride * bb.h, v.alpha)
     end
 end
 
