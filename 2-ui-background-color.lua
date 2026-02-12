@@ -155,7 +155,7 @@ local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
 local bg_cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
     invert_in_night_mode = InvertBackgroundColor.get(),
-    set_textbox_colors = TextBoxBackgroundColor.get(),
+    set_textbox_color = TextBoxBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
     hex = HexBackgroundColor.get(),
     last_hex = nil,
@@ -190,7 +190,7 @@ local function setBackgroundColor(hex)
     recomputeBGColor()
 
     -- If TextBoxWidget colors are enabled, then update the file list
-    if bg_cached.set_textbox_colors then
+    if bg_cached.set_textbox_color then
         refreshFileManager()
     end
 
@@ -311,7 +311,7 @@ local function background_color_menu()
                     bg_cached.invert_in_night_mode = InvertBackgroundColor.get()
                     recomputeBGColor()
 
-                    if bg_cached.set_textbox_colors then
+                    if bg_cached.set_textbox_color then
                         refreshFileManager()
                     end
 
@@ -327,7 +327,7 @@ local function background_color_menu()
                 checked_func = TextBoxBackgroundColor.get,
                 callback = function()
                     TextBoxBackgroundColor.toggle()
-                    bg_cached.set_textbox_colors = TextBoxBackgroundColor.get()
+                    bg_cached.set_textbox_color = TextBoxBackgroundColor.get()
 
                     -- Update the file list
                     refreshFileManager()
@@ -703,7 +703,7 @@ function UIManager:ToggleNightMode()
 
     if not bg_cached.invert_in_night_mode then
         -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
-        if bg_cached.set_textbox_colors then
+        if bg_cached.set_textbox_color then
             refreshFileManager()
         end
         ImageCache:clear()
@@ -720,7 +720,7 @@ function UIManager:SetNightMode(night_mode)
         recomputeBGColor()
 
         if not bg_cached.invert_in_night_mode then
-            if bg_cached.set_textbox_colors then
+            if bg_cached.set_textbox_color then
                 refreshFileManager()
             end
             ImageCache:clear()
@@ -770,7 +770,7 @@ local original_TextBoxWidget_renderText = TextBoxWidget._renderText
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
     local original_bgcolor = self.bgcolor
 
-    if bg_cached.set_textbox_colors then
+    if bg_cached.set_textbox_color then
         self.bgcolor = bg_cached.bgcolor
     end
 
