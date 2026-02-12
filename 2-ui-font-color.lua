@@ -1,6 +1,9 @@
 --[[
     This user patch allows for changing the UI font color.
-    It has menu options for the color, a toggle to invert it in night mode, and a toggle for TextBoxWidgets.
+    It has the following menu options in addition to the color:
+        - A toggle to invert it in night mode.
+        - A toggle for affecting TextBoxWidgets.
+        - A toggle for affecting the dictionary text.
     Optionally, the color can be set with a color picker.
 --]]
 
