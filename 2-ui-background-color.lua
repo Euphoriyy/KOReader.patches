@@ -33,6 +33,7 @@ local TextBoxWidget = require("ui/widget/textboxwidget")
 local ToggleSwitch = require("ui/widget/toggleswitch")
 local UIManager = require("ui/uimanager")
 local UnderlineContainer = require("ui/widget/container/underlinecontainer")
+local VirtualKeyboard = require("ui/widget/virtualkeyboard")
 local ffi = require("ffi")
 local logger = require("logger")
 local util = require("util")
@@ -123,6 +124,16 @@ end
 local function colorEquals(c1, c2)
     if not c1 or not c2 then return false end
     return c1:getColorRGB32() == c2:getColorRGB32()
+end
+
+-- Helper: compute luminance of a color (0 = black, 1 = white)
+local function luminance(color)
+    return 0.299 * color:getR() + 0.587 * color:getG() + 0.114 * color:getB()
+end
+
+-- Helper: compute contrast between two colors
+local function contrast(c1, c2)
+    return math.abs(luminance(c1) - luminance(c2))
 end
 
 -- Helper: check if we have a document open
@@ -1005,4 +1016,28 @@ function ReaderStyleTweak:getCssText()
     else
         return original_css
     end
+end
+
+-- Restore virtual keyboard key border with appropriate color
+local original_VirtualKeyboard_onShow = VirtualKeyboard.onShow
+
+function VirtualKeyboard:onShow()
+    local border_color = Blitbuffer.ColorRGB32(
+        bg_cached.bgcolor:getR() * 0.6,
+        bg_cached.bgcolor:getG() * 0.6,
+        bg_cached.bgcolor:getB() * 0.6
+    )
+
+    -- Set border color to dark gray when more contrast is needed
+    if contrast(border_color, bg_cached.bgcolor) < 5 then
+        border_color = Blitbuffer.COLOR_DARK_GRAY
+    end
+
+    -- Key border
+    if G_reader_settings:nilOrTrue("keyboard_key_border") then
+        self[1][1].original_background = border_color
+        self[1][1].background = EXCLUSION_COLOR
+    end
+
+    return original_VirtualKeyboard_onShow(self)
 end
