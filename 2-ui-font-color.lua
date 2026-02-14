@@ -97,6 +97,35 @@ local function hexToHSV(hex)
     return h, s, v
 end
 
+-- Helper: check if two colors are equal
+local function colorEquals(c1, c2)
+    if not c1 or not c2 then return false end
+    return c1:getColorRGB32() == c2:getColorRGB32()
+end
+
+-- Helper: compute luminance of a color (0 = black, 1 = white)
+local function luminance(color)
+    return 0.299 * color:getR() + 0.587 * color:getG() + 0.114 * color:getB()
+end
+
+-- Helper: compute contrast between two colors
+local function contrast(c1, c2)
+    return math.abs(luminance(c1) - luminance(c2))
+end
+
+-- Helper: lighten a color by a percentage
+local function lightenColor(c, amount)
+    local r = c:getR()
+    local g = c:getG()
+    local b = c:getB()
+
+    return Blitbuffer.ColorRGB32(
+        math.floor(r + (255 - r) * amount),
+        math.floor(g + (255 - g) * amount),
+        math.floor(b + (255 - b) * amount)
+    )
+end
+
 -- Cache
 local cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
@@ -337,7 +366,17 @@ local original_TextWidget_paintTo = TextWidget.paintTo
 function TextWidget:paintTo(bb, x, y)
     local original_fgcolor = self.fgcolor
 
-    self.fgcolor = cached.fgcolor
+    -- If the original color was dark gray, then place a lighter color
+    if colorEquals(original_fgcolor, Blitbuffer.COLOR_DARK_GRAY) then
+        self.fgcolor = lightenColor(cached.fgcolor, 0.5)
+
+        -- Set font color to dark gray when more contrast is needed
+        if contrast(self.fgcolor, cached.fgcolor) < 10 then
+            self.fgcolor = Blitbuffer.COLOR_DARK_GRAY
+        end
+    else
+        self.fgcolor = cached.fgcolor
+    end
 
     -- Use original B/W TextWidget painting method if color is not enabled
     if not Screen:isColorEnabled() then
