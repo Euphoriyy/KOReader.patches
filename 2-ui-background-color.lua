@@ -9,6 +9,7 @@
 
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
+local Button = require("ui/widget/button")
 local Cache = require("cache")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
 local Event = require("ui/event")
@@ -24,6 +25,7 @@ local ReaderFooter = require("apps/reader/modules/readerfooter")
 local RenderImage = require("ui/renderimage")
 local Screen = require("device").screen
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
+local Size = require("ui/size")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local ToggleSwitch = require("ui/widget/toggleswitch")
 local UIManager = require("ui/uimanager")
@@ -908,4 +910,24 @@ function ToggleSwitch:update()
             end
         end
     end
+end
+
+-- Change button inversion color for visual feedback
+function Button:_doFeedbackHighlight()
+    if self.text then
+        if self[1].radius == nil then
+            self[1].radius = Size.radius.button
+            self[1].original_background = bg_cached.bgcolor:invert()
+            self[1].background = EXCLUSION_COLOR
+            self.label_widget.fgcolor = self.label_widget.fgcolor:invert()
+        else
+            self[1].invert = true
+        end
+
+        UIManager:widgetRepaint(self[1], self[1].dimen.x, self[1].dimen.y)
+    else
+        self[1].invert = true
+        UIManager:widgetInvert(self[1], self[1].dimen.x, self[1].dimen.y)
+    end
+    UIManager:setDirty(nil, "fast", self[1].dimen)
 end
