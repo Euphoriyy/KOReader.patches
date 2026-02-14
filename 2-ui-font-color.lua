@@ -25,10 +25,12 @@ local function Setting(name, default)
 end
 
 -- Settings
-local HexFontColor = Setting("ui_font_color_hex", "#000000")    -- RGB hex for UI font color (default: #000000)
-local InvertFontColor = Setting("ui_font_color_inverted", true) -- Whether the UI font color should be inverted in night mode (default: true)
-local TextBoxFontColor = Setting("ui_font_color_textbox", true) -- Whether the font color of TextBoxWidgets should be changed (default: true)
-local DictionaryFontColor = Setting("ui_font_color_dict", true) -- Whether the font color of the dictionary should be changed (default: true)
+local HexFontColor = Setting("ui_font_color_hex", "#000000")            -- RGB hex for UI font color (default: #000000)
+local InvertFontColor = Setting("ui_font_color_inverted", true)         -- Whether the UI font color should be inverted in night mode (default: true)
+local AltNightFontColor = Setting("ui_font_color_alt_night", false)     -- Whether the UI font color should be changed to an alternative color in night mode (default: false)
+local NightHexFontColor = Setting("ui_font_color_night_hex", "#ffffff") -- RGB hex for the alternative UI font color in night mode (default: #ffffff)
+local TextBoxFontColor = Setting("ui_font_color_textbox", true)         -- Whether the font color of TextBoxWidgets should be changed (default: true)
+local DictionaryFontColor = Setting("ui_font_color_dict", true)         -- Whether the font color of the dictionary should be changed (default: true)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -129,10 +131,12 @@ end
 -- Cache
 local cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
+    alt_night_color = AltNightFontColor.get(),
     invert_in_night_mode = InvertFontColor.get(),
     set_textbox_color = TextBoxFontColor.get(),
     set_dictionary_color = DictionaryFontColor.get(),
     hex = HexFontColor.get(),
+    night_hex = NightHexFontColor.get(),
     last_hex = nil,
     fgcolor = nil,
 }
@@ -140,9 +144,11 @@ local cached = {
 -- Recompute and cache the final fgcolor based on current settings
 -- Applies night mode inversion if enabled, and updates cached.fgcolor only if it has changed
 local function recomputeFGColor()
-    local hex = cached.hex
-    if cached.night_mode and not cached.invert_in_night_mode then
-        hex = invertColor(hex)
+    local hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
+    if cached.night_mode then
+        if cached.alt_night_color or not cached.invert_in_night_mode then
+            hex = invertColor(hex)
+        end
     end
     if hex ~= cached.last_hex then
         cached.fgcolor = Blitbuffer.colorFromString(hex)
@@ -159,9 +165,23 @@ local function refreshFileManager()
     end
 end
 
+local function getFontColor()
+    if cached.night_mode and cached.alt_night_color then
+        return NightHexFontColor.get()
+    else
+        return HexFontColor.get()
+    end
+end
+
 local function setFontColor(hex)
-    HexFontColor.set(hex)
-    cached.hex = hex
+    if cached.night_mode and cached.alt_night_color then
+        NightHexFontColor.set(hex)
+        cached.night_hex = hex
+    else
+        HexFontColor.set(hex)
+        cached.hex = hex
+    end
+
     recomputeFGColor()
 
     -- If TextBoxWidget colors are enabled, then update the file list
@@ -185,7 +205,7 @@ local function set_color_menu()
             local input_dialog
             input_dialog = InputDialog:new({
                 title = "Enter custom color code",
-                input = HexFontColor.get(),
+                input = getFontColor(),
                 input_hint = "#000000",
                 buttons = {
                     {
@@ -228,14 +248,15 @@ local function pick_color_menu()
         text = _("Pick color visually"),
         keep_menu_open = true,
         callback = function(touchmenu_instance)
-            local h, s, v = hexToHSV(HexFontColor.get())
+            local h, s, v = hexToHSV(getFontColor())
             local wheel
+            local should_invert_wheel = AltNightFontColor.get() or not InvertFontColor.get()
             wheel = ColorWheelWidget:new({
                 title_text = "Pick font color",
                 hue = h,
                 saturation = s,
                 value = v,
-                invert_in_night_mode = not InvertFontColor.get(),
+                invert_in_night_mode = should_invert_wheel,
                 callback = function(hex)
                     setFontColor(hex)
 
@@ -256,13 +277,13 @@ end
 local function font_color_menu()
     return {
         text_func = function()
-            return T(_("UI font color: %1"), HexFontColor.get())
+            return T(_("UI font color: %1"), getFontColor())
         end,
         sub_item_table_func = function()
             local items = {
                 {
                     text_func = function()
-                        return T(_("Current color: %1"), HexFontColor.get())
+                        return T(_("Current color: %1"), getFontColor())
                     end,
                 },
                 set_color_menu(),
@@ -274,7 +295,25 @@ local function font_color_menu()
             end
 
             table.insert(items, {
+                text = _("Alternative night mode color"),
+                checked_func = AltNightFontColor.get,
+                callback = function()
+                    AltNightFontColor.toggle()
+                    cached.alt_night_color = AltNightFontColor.get()
+
+                    if cached.night_mode then
+                        recomputeFGColor()
+
+                        if cached.set_textbox_color then
+                            refreshFileManager()
+                        end
+                    end
+                end,
+            })
+
+            table.insert(items, {
                 text = _("Invert color in night mode"),
+                enabled_func = function() return not AltNightFontColor.get() end,
                 checked_func = InvertFontColor.get,
                 callback = function()
                     InvertFontColor.toggle()
@@ -340,7 +379,7 @@ function UIManager:ToggleNightMode()
     recomputeFGColor()
 
     -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
-    if cached.set_textbox_color and not cached.invert_in_night_mode then
+    if (cached.alt_night_color or not cached.invert_in_night_mode) and cached.set_textbox_color then
         refreshFileManager()
     end
 end
@@ -354,7 +393,7 @@ function UIManager:SetNightMode(night_mode)
         cached.night_mode = night_mode
         recomputeFGColor()
 
-        if cached.set_textbox_color and not cached.invert_in_night_mode then
+        if (cached.alt_night_color or not cached.invert_in_night_mode) and cached.set_textbox_color then
             refreshFileManager()
         end
     end
@@ -449,9 +488,11 @@ function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
     if cached.set_dictionary_color then
-        local fg_hex = cached.hex
-        if cached.night_mode and not cached.invert_in_night_mode then
-            fg_hex = invertColor(fg_hex)
+        local fg_hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
+        if cached.night_mode then
+            if cached.alt_night_color or not cached.invert_in_night_mode then
+                fg_hex = invertColor(fg_hex)
+            end
         end
         local custom_css = [[
             body {

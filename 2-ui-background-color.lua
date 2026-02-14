@@ -47,11 +47,13 @@ local function Setting(name, default)
 end
 
 -- Settings
-local HexBackgroundColor = Setting("ui_background_color_hex", "#ffffff")          -- RGB hex for UI background color (default: #ffffff)
-local InvertBackgroundColor = Setting("ui_background_color_inverted", true)       -- Whether the UI background color should be inverted in night mode (default: true)
-local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)       -- Whether the background color of TextBoxWidgets should be changed (default: true)
-local PageBackgroundColor = Setting("ui_background_color_reader_page", false)     -- Whether the background color of the page should be changed (default: false)
-local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false) -- Whether the background color of the ReaderFooter should be changed (default: false)
+local HexBackgroundColor = Setting("ui_background_color_hex", "#ffffff")            -- RGB hex for UI background color (default: #ffffff)
+local InvertBackgroundColor = Setting("ui_background_color_inverted", true)         -- Whether the UI background color should be inverted in night mode (default: true)
+local AltNightBackgroundColor = Setting("ui_background_color_alt_night", false)     -- Whether the UI background color should be changed to an alternative color in night mode (default: false)
+local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#000000") -- RGB hex for the alternative UI background color in night mode (default: #000000)
+local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)         -- Whether the background color of TextBoxWidgets should be changed (default: true)
+local PageBackgroundColor = Setting("ui_background_color_reader_page", false)       -- Whether the background color of the page should be changed (default: false)
+local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false)   -- Whether the background color of the ReaderFooter should be changed (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -178,11 +180,13 @@ local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
 -- Cache
 local bg_cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
+    alt_night_color = AltNightBackgroundColor.get(),
     invert_in_night_mode = InvertBackgroundColor.get(),
     set_textbox_color = TextBoxBackgroundColor.get(),
     set_page_color = PageBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
     hex = HexBackgroundColor.get(),
+    night_hex = NightHexBackgroundColor.get(),
     last_hex = nil,
     bgcolor = nil,
 }
@@ -190,9 +194,11 @@ local bg_cached = {
 -- Recompute and cache the final bgcolor based on current settings
 -- Applies night mode inversion if enabled, and updates bg_cached.bgcolor only if it has changed
 local function recomputeBGColor()
-    local hex = bg_cached.hex
-    if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
-        hex = invertColor(hex)
+    local hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+    if bg_cached.night_mode then
+        if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
+            hex = invertColor(hex)
+        end
     end
     if hex ~= bg_cached.last_hex then
         bg_cached.bgcolor = Blitbuffer.colorFromString(hex)
@@ -220,9 +226,22 @@ function ReaderFooter:onRefreshFooterBackground()
     self:refreshFooter(true)
 end
 
+local function getBackgroundColor()
+    if bg_cached.night_mode and bg_cached.alt_night_color then
+        return NightHexBackgroundColor.get()
+    else
+        return HexBackgroundColor.get()
+    end
+end
+
 local function setBackgroundColor(hex)
-    HexBackgroundColor.set(hex)
-    bg_cached.hex = hex
+    if bg_cached.night_mode and bg_cached.alt_night_color then
+        NightHexBackgroundColor.set(hex)
+        bg_cached.night_hex = hex
+    else
+        HexBackgroundColor.set(hex)
+        bg_cached.hex = hex
+    end
     recomputeBGColor()
 
     -- If TextBoxWidget colors are enabled, then update the file list
@@ -253,7 +272,7 @@ local function set_color_menu()
             local input_dialog
             input_dialog = InputDialog:new({
                 title = "Enter custom color code",
-                input = HexBackgroundColor.get(),
+                input = getBackgroundColor(),
                 input_hint = "#FFFFFF",
                 buttons = {
                     {
@@ -296,14 +315,15 @@ local function pick_color_menu()
         text = _("Pick color visually"),
         keep_menu_open = true,
         callback = function(touchmenu_instance)
-            local h, s, v = hexToHSV(HexBackgroundColor.get())
+            local h, s, v = hexToHSV(getBackgroundColor())
             local wheel
+            local should_invert_wheel = AltNightBackgroundColor.get() or not InvertBackgroundColor.get()
             wheel = ColorWheelWidget:new({
                 title_text = "Pick background color",
                 hue = h,
                 saturation = s,
                 value = v,
-                invert_in_night_mode = not InvertBackgroundColor.get(),
+                invert_in_night_mode = should_invert_wheel,
                 callback = function(hex)
                     setBackgroundColor(hex)
 
@@ -324,13 +344,13 @@ end
 local function background_color_menu()
     return {
         text_func = function()
-            return T(_("UI background color: %1"), HexBackgroundColor.get())
+            return T(_("UI background color: %1"), getBackgroundColor())
         end,
         sub_item_table_func = function()
             local items = {
                 {
                     text_func = function()
-                        return T(_("Current color: %1"), HexBackgroundColor.get())
+                        return T(_("Current color: %1"), getBackgroundColor())
                     end,
                 },
                 set_color_menu(),
@@ -342,7 +362,31 @@ local function background_color_menu()
             end
 
             table.insert(items, {
+                text = _("Alternative night mode color"),
+                checked_func = AltNightBackgroundColor.get,
+                callback = function()
+                    AltNightBackgroundColor.toggle()
+                    bg_cached.alt_night_color = AltNightBackgroundColor.get()
+
+                    if bg_cached.night_mode then
+                        recomputeBGColor()
+
+                        reloadIcons()
+
+                        if bg_cached.set_textbox_color then
+                            refreshFileManager()
+                        end
+
+                        if bg_cached.set_page_color and has_document_open() then
+                            UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                        end
+                    end
+                end,
+            })
+
+            table.insert(items, {
                 text = _("Invert color in night mode"),
+                enabled_func = function() return not AltNightBackgroundColor.get() end,
                 checked_func = InvertBackgroundColor.get,
                 callback = function()
                     InvertBackgroundColor.toggle()
@@ -769,7 +813,7 @@ function UIManager:ToggleNightMode()
     bg_cached.night_mode = not bg_cached.night_mode
     recomputeBGColor()
 
-    if not bg_cached.invert_in_night_mode then
+    if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
         -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
         if bg_cached.set_textbox_color then
             refreshFileManager()
@@ -792,7 +836,7 @@ function UIManager:SetNightMode(night_mode)
         bg_cached.night_mode = night_mode
         recomputeBGColor()
 
-        if not bg_cached.invert_in_night_mode then
+        if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
             if bg_cached.set_textbox_color then
                 refreshFileManager()
             end
@@ -923,9 +967,11 @@ local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDic
 function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
-    local bg_hex = bg_cached.hex
-    if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
-        bg_hex = invertColor(bg_hex)
+    local bg_hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+    if bg_cached.night_mode then
+        if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
+            bg_hex = invertColor(bg_hex)
+        end
     end
     local custom_css = [[
         body {
@@ -1003,9 +1049,11 @@ function ReaderStyleTweak:getCssText()
     local original_css = original_ReaderStyleTweak_getCssText(self)
 
     if bg_cached.set_page_color then
-        local bg_hex = bg_cached.hex
-        if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
-            bg_hex = invertColor(bg_hex)
+        local bg_hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+        if bg_cached.night_mode then
+            if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
+                bg_hex = invertColor(bg_hex)
+            end
         end
 
         local bg_css = [[
