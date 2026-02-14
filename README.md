@@ -35,7 +35,10 @@ This patch adds the ability to change the RGB color of the UI font.
 
 It can be configured under **🞂 UI font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
-It has options for the color, a toggle to invert it in night mode, a toggle for TextBoxWidgets (affects CoverBrowser), and a toggle for dictionary text.
+Besides the color, it has options for:
+- A toggle to invert it in night mode.
+- A toggle for TextBoxWidgets (which affects CoverBrowser).
+- A toggle for the dictionary text.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
@@ -48,7 +51,11 @@ It is most recommended for non-e-ink devices for visiblity and refresh clarity, 
 
 It can be configured under **🞂 UI background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
-It has options for the color, a toggle to invert it in night mode, a toggle for TextBoxWidgets (affects CoverBrowser), a toggle to change the page background color, and a toggle for the ReaderFooter.
+Besides the color, it has options for:
+- A toggle to invert it in night mode.
+- A toggle for TextBoxWidgets (which affects CoverBrowser).
+- A toggle to change the page background color.
+- A toggle for the reader footer.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
