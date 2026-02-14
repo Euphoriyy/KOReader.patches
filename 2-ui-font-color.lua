@@ -172,11 +172,11 @@ local function set_color_menu()
                                 local text = input_dialog:getInputText()
 
                                 if text ~= "" then
-                                    if not text:match("^#%x%x%x%x?%x?%x?$") then
+                                    if not text:match("^#%x%x%x%x%x%x$") then
                                         return
                                     end
 
-                                    setFontColor(text)
+                                    setFontColor(string.upper(text))
 
                                     touchmenu_instance:updateItems()
                                     UIManager:close(input_dialog)

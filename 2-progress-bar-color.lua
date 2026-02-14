@@ -223,12 +223,12 @@ function ProgressWidget:_setColors(thin)
     local readColor    = Settings:getPersistent(thin, read)
     local unreadColor  = Settings:getPersistent(thin, unread)
 
-    if not readColor:match("^#%x%x%x%x?%x?%x?$") then
+    if not readColor:match("^#%x%x%x%x%x%x$") then
         readColor = "#808080"
         Settings:setPersistent(thin, read, readColor)
     end
 
-    if not unreadColor:match("^#%x%x%x%x?%x?%x?$") then
+    if not unreadColor:match("^#%x%x%x%x%x%x$") then
         unreadColor = "#c0c0c0"
         Settings:setPersistent(thin, unread, unreadColor)
     end
@@ -321,7 +321,7 @@ function ReaderFooter:_statusBarColorMenu(read)
                                 local text = input_dialog:getInputText()
 
                                 if text ~= "" then
-                                    if not text:match("^#%x%x%x%x?%x?%x?$") then
+                                    if not text:match("^#%x%x%x%x%x%x$") then
                                         return
                                     end
 
@@ -338,7 +338,7 @@ function ReaderFooter:_statusBarColorMenu(read)
                                         return
                                     end
 
-                                    Settings:setPersistent(self.settings.progress_style_thin, color_attrib, text)
+                                    Settings:setPersistent(self.settings.progress_style_thin, color_attrib, string.upper(text))
                                     self.progress_bar[color_attrib] = color
                                     touchmenu_instance:updateItems()
                                     self:refreshFooter(true)
