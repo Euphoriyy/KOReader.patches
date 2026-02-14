@@ -1,6 +1,7 @@
 --[[
     This user patch allows for changing the UI background color.
     It has the following menu options in addition to the color:
+        - A toggle to use an alternative color in night mode.
         - A toggle to invert it in night mode.
         - A toggle for affecting TextBoxWidgets.
         - A toggle for changing the page background color (EPUB/HTML).

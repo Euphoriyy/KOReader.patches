@@ -36,6 +36,7 @@ This patch adds the ability to change the RGB color of the UI font.
 It can be configured under **🞂 UI font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
 Besides the color, it has options for:
+- A toggle to use an alternative color in night mode.
 - A toggle to invert it in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle for the dictionary text.
@@ -52,6 +53,7 @@ It is most recommended for non-e-ink devices for visiblity and refresh clarity, 
 It can be configured under **🞂 UI background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
 Besides the color, it has options for:
+- A toggle to use an alternative color in night mode.
 - A toggle to invert it in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle to change the page background color.
