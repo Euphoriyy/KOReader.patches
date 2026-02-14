@@ -11,6 +11,7 @@ local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Cache = require("cache")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
+local Event = require("ui/event")
 local FileManager = require("apps/filemanager/filemanager")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
@@ -184,6 +185,11 @@ local function refreshFileManager()
     end
 end
 
+local function reloadIcons()
+    ImageCache:clear()
+    UIManager:broadcastEvent(Event:new("ChangeBackgroundColor"))
+end
+
 local function setBackgroundColor(hex)
     HexBackgroundColor.set(hex)
     bg_cached.hex = hex
@@ -194,10 +200,7 @@ local function setBackgroundColor(hex)
         refreshFileManager()
     end
 
-    ImageCache:clear()
-
-    -- Ask for restart, otherwise icon backgrounds may fail to be filled
-    UIManager:askForRestart()
+    reloadIcons()
 end
 
 -- Patch menus
@@ -315,10 +318,9 @@ local function background_color_menu()
                         refreshFileManager()
                     end
 
-                    ImageCache:clear()
-
-                    -- Ask for restart, otherwise icon backgrounds may fail to be filled
-                    UIManager:askForRestart()
+                    if bg_cached.night_mode then
+                        reloadIcons()
+                    end
                 end,
             })
 
@@ -679,14 +681,23 @@ function ImageWidget:paintTo(bb, x, y)
     end
 end
 
--- Reload icon images on night mode state changes
-IconWidget.onToggleNightMode = function(self)
+-- Handles ChangeBackgroundColor event
+-- Reload icon images on background color changes
+function IconWidget:onChangeBackgroundColor()
     self:free()
     self:init()
 end
 
-IconWidget.onSetNightMode = function(self, night_mode)
-    if bg_cached.night_mode ~= night_mode then
+-- Reload icon images on night mode state changes
+function IconWidget:onToggleNightMode()
+    if not bg_cached.invert_in_night_mode then
+        self:free()
+        self:init()
+    end
+end
+
+function IconWidget:onSetNightMode(night_mode)
+    if bg_cached.night_mode ~= night_mode and not bg_cached.invert_in_night_mode then
         self:free()
         self:init()
     end
