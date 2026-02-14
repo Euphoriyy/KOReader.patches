@@ -349,12 +349,13 @@ local function background_color_menu()
                     bg_cached.invert_in_night_mode = InvertBackgroundColor.get()
                     recomputeBGColor()
 
-                    if bg_cached.set_textbox_color then
-                        refreshFileManager()
-                    end
 
                     if bg_cached.night_mode then
                         reloadIcons()
+
+                        if bg_cached.set_textbox_color then
+                            refreshFileManager()
+                        end
 
                         if bg_cached.set_page_color and has_document_open() then
                             UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))

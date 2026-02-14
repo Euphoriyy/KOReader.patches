@@ -281,7 +281,7 @@ local function font_color_menu()
                     cached.invert_in_night_mode = InvertFontColor.get()
                     recomputeFGColor()
 
-                    if cached.set_textbox_color then
+                    if cached.night_mode and cached.set_textbox_color then
                         refreshFileManager()
                     end
                 end,
