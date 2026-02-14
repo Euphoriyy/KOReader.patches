@@ -25,6 +25,7 @@ local RenderImage = require("ui/renderimage")
 local Screen = require("device").screen
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
 local TextBoxWidget = require("ui/widget/textboxwidget")
+local ToggleSwitch = require("ui/widget/toggleswitch")
 local UIManager = require("ui/uimanager")
 local UnderlineContainer = require("ui/widget/container/underlinecontainer")
 local ffi = require("ffi")
@@ -867,4 +868,44 @@ function DictQuickLookup:getHtmlDictionaryCss()
     ]]
 
     return original_css .. custom_css
+end
+
+-- Replace ToggleSwitch update method to use appropriate fgcolor
+function ToggleSwitch:update()
+    self.fgcolor = Blitbuffer.ColorRGB32(
+        bg_cached.bgcolor:getR() * 0.6,
+        bg_cached.bgcolor:getG() * 0.6,
+        bg_cached.bgcolor:getB() * 0.6
+    )
+
+    local pos = self.position
+    for i = 1, #self.toggle_content do
+        local row = self.toggle_content[i]
+        for j = 1, #row do
+            local cell = row[j]
+            if not bg_cached.night_mode then
+                if pos == (i - 1) * self.n_pos + j then
+                    cell.color = self.fgcolor
+                    cell.original_background = self.fgcolor
+                    cell.background = EXCLUSION_COLOR
+                    cell[1][1].fgcolor = Blitbuffer.COLOR_WHITE
+                else
+                    cell.color = self.bgcolor
+                    cell.background = self.bgcolor
+                    cell[1][1].fgcolor = Blitbuffer.COLOR_BLACK
+                end
+            else
+                if pos == (i - 1) * self.n_pos + j then
+                    cell.color = self.bgcolor
+                    cell.background = self.bgcolor
+                    cell[1][1].fgcolor = Blitbuffer.COLOR_BLACK
+                else
+                    cell.color = self.fgcolor
+                    cell.original_background = self.fgcolor
+                    cell.background = EXCLUSION_COLOR
+                    cell[1][1].fgcolor = Blitbuffer.COLOR_WHITE
+                end
+            end
+        end
+    end
 end
