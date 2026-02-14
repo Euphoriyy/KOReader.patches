@@ -203,6 +203,12 @@ local function reloadIcons()
     UIManager:broadcastEvent(Event:new("ChangeBackgroundColor"))
 end
 
+-- Handles RefreshFooterBackground event
+-- Refresh the reader footer
+function ReaderFooter:onRefreshFooterBackground()
+    self:refreshFooter(true)
+end
+
 local function setBackgroundColor(hex)
     HexBackgroundColor.set(hex)
     bg_cached.hex = hex
@@ -377,6 +383,10 @@ local function background_color_menu()
                 callback = function()
                     FooterBackgroundColor.toggle()
                     bg_cached.set_footer_color = FooterBackgroundColor.get()
+
+                    if has_document_open() then
+                        UIManager:broadcastEvent(Event:new("RefreshFooterBackground"))
+                    end
                 end,
             })
             return items
