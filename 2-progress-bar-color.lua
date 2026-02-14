@@ -306,7 +306,7 @@ function ReaderFooter:_statusBarColorMenu(read)
             input_dialog = InputDialog:new({
                 title = "Enter color hex code for " .. (read and "read color" or "unread color"),
                 input = Settings:getPersistent(self.settings.progress_style_thin, color_attrib),
-                input_hint = "#ffffff",
+                input_hint = "#FFFFFF",
                 buttons = {
                     {
                         {

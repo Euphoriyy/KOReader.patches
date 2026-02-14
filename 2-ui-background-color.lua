@@ -243,7 +243,7 @@ local function set_color_menu()
             input_dialog = InputDialog:new({
                 title = "Enter custom color code",
                 input = HexBackgroundColor.get(),
-                input_hint = "#000000",
+                input_hint = "#FFFFFF",
                 buttons = {
                     {
                         {
