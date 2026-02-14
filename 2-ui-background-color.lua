@@ -3,6 +3,7 @@
     It has the following menu options in addition to the color:
         - A toggle to invert it in night mode.
         - A toggle for affecting TextBoxWidgets.
+        - A toggle for changing the page background color (EPUB/HTML).
         - A toggle for affecting the ReaderFooter.
     Optionally, the color can be set with a color picker.
 --]]
@@ -22,6 +23,8 @@ local ImageWidget = require("ui/widget/imagewidget")
 local InputText = require("ui/widget/inputtext")
 local LineWidget = require("ui/widget/linewidget")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
+local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
+local ReaderUI = require("apps/reader/readerui")
 local RenderImage = require("ui/renderimage")
 local Screen = require("device").screen
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
@@ -46,6 +49,7 @@ end
 local HexBackgroundColor = Setting("ui_background_color_hex", "#ffffff")          -- RGB hex for UI background color (default: #ffffff)
 local InvertBackgroundColor = Setting("ui_background_color_inverted", true)       -- Whether the UI background color should be inverted in night mode (default: true)
 local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)       -- Whether the background color of TextBoxWidgets should be changed (default: true)
+local PageBackgroundColor = Setting("ui_background_color_reader_page", false)     -- Whether the background color of the page should be changed (default: false)
 local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false) -- Whether the background color of the ReaderFooter should be changed (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
@@ -121,6 +125,11 @@ local function colorEquals(c1, c2)
     return c1:getColorRGB32() == c2:getColorRGB32()
 end
 
+-- Helper: check if we have a document open
+local function has_document_open()
+    return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
+end
+
 ------------------------------------------------------------
 -- ImageWidget specific code
 ------------------------------------------------------------
@@ -160,6 +169,7 @@ local bg_cached = {
     night_mode = G_reader_settings:isTrue("night_mode"),
     invert_in_night_mode = InvertBackgroundColor.get(),
     set_textbox_color = TextBoxBackgroundColor.get(),
+    set_page_color = PageBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
     hex = HexBackgroundColor.get(),
     last_hex = nil,
@@ -204,6 +214,11 @@ local function setBackgroundColor(hex)
     end
 
     reloadIcons()
+
+    -- Reapply page CSS
+    if bg_cached.set_page_color and has_document_open() then
+        UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+    end
 end
 
 -- Patch menus
@@ -323,6 +338,10 @@ local function background_color_menu()
 
                     if bg_cached.night_mode then
                         reloadIcons()
+
+                        if bg_cached.set_page_color and has_document_open() then
+                            UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                        end
                     end
                 end,
             })
@@ -336,6 +355,19 @@ local function background_color_menu()
 
                     -- Update the file list
                     refreshFileManager()
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Apply to reader pages (EPUB/HTML)"),
+                checked_func = PageBackgroundColor.get,
+                callback = function()
+                    PageBackgroundColor.toggle()
+                    bg_cached.set_page_color = PageBackgroundColor.get()
+
+                    if has_document_open() then
+                        UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                    end
                 end,
             })
 
@@ -720,7 +752,12 @@ function UIManager:ToggleNightMode()
         if bg_cached.set_textbox_color then
             refreshFileManager()
         end
+
         ImageCache:clear()
+
+        if bg_cached.set_page_color and has_document_open() then
+            UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+        end
     end
 end
 
@@ -737,7 +774,12 @@ function UIManager:SetNightMode(night_mode)
             if bg_cached.set_textbox_color then
                 refreshFileManager()
             end
+
             ImageCache:clear()
+
+            if bg_cached.set_page_color and has_document_open() then
+                UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+            end
         end
     end
 end
@@ -930,4 +972,27 @@ function Button:_doFeedbackHighlight()
         UIManager:widgetInvert(self[1], self[1].dimen.x, self[1].dimen.y)
     end
     UIManager:setDirty(nil, "fast", self[1].dimen)
+end
+
+-- Add background color to reader style tweak CSS if enabled
+local original_ReaderStyleTweak_getCssText = ReaderStyleTweak.getCssText
+
+function ReaderStyleTweak:getCssText()
+    local original_css = original_ReaderStyleTweak_getCssText(self)
+
+    if bg_cached.set_page_color then
+        local bg_hex = bg_cached.hex
+        if bg_cached.night_mode and not bg_cached.invert_in_night_mode then
+            bg_hex = invertColor(bg_hex)
+        end
+
+        local bg_css = [[
+        body {
+            background-color: ]] .. bg_hex .. [[;
+        }
+    ]]
+        return util.trim(bg_css .. original_css)
+    else
+        return original_css
+    end
 end

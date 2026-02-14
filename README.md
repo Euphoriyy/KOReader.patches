@@ -48,7 +48,7 @@ It is most recommended for non-e-ink devices for visiblity and refresh clarity, 
 
 It can be configured under **🞂 UI background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
-It has options for the color, a toggle to invert it in night mode, a toggle for TextBoxWidgets (affects CoverBrowser), and a toggle for the ReaderFooter.
+It has options for the color, a toggle to invert it in night mode, a toggle for TextBoxWidgets (affects CoverBrowser), a toggle to change the page background color, and a toggle for the ReaderFooter.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
