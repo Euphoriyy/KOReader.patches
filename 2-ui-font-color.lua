@@ -5,7 +5,7 @@
         - A toggle to invert it in night mode.
         - A toggle for affecting TextBoxWidgets.
         - A toggle for affecting the dictionary text.
-        - A toggle for changing the page font color (EPUB/HTML).
+        - A toggle for changing the page font color (epub, html, fb2, txt...).
     Optionally, the color can be set with a color picker.
 --]]
 
@@ -376,7 +376,7 @@ local function font_color_menu()
             })
 
             table.insert(items, {
-                text = _("Apply to reader pages (EPUB/HTML)"),
+                text = _("Apply to reader pages (epub, html, fb2, txt...)"),
                 checked_func = PageFontColor.get,
                 callback = function()
                     PageFontColor.toggle()

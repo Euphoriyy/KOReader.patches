@@ -4,7 +4,7 @@
         - A toggle to use an alternative color in night mode.
         - A toggle to invert it in night mode.
         - A toggle for affecting TextBoxWidgets.
-        - A toggle for changing the page background color (EPUB/HTML).
+        - A toggle for changing the page background color (epub, html, fb2, txt...).
         - A toggle for affecting the ReaderFooter.
     Optionally, the color can be set with a color picker.
 --]]
@@ -422,7 +422,7 @@ local function background_color_menu()
             })
 
             table.insert(items, {
-                text = _("Apply to reader pages (EPUB/HTML)"),
+                text = _("Apply to reader pages (epub, html, fb2, txt...)"),
                 checked_func = PageBackgroundColor.get,
                 callback = function()
                     PageBackgroundColor.toggle()

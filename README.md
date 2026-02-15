@@ -40,7 +40,7 @@ Besides the color, it has options for:
 - A toggle to invert it in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle for the dictionary text.
-- A toggle to change the page font color.
+- A toggle to change the page font color. (epub, html, fb2, txt...)
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
@@ -57,7 +57,7 @@ Besides the color, it has options for:
 - A toggle to use an alternative color in night mode.
 - A toggle to invert it in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
-- A toggle to change the page background color.
+- A toggle to change the page background color. (epub, html, fb2, txt...)
 - A toggle for the reader footer.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
