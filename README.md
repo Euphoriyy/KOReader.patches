@@ -40,6 +40,7 @@ Besides the color, it has options for:
 - A toggle to invert it in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle for the dictionary text.
+- A toggle to change the page font color.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 

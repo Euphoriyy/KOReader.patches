@@ -5,17 +5,22 @@
         - A toggle to invert it in night mode.
         - A toggle for affecting TextBoxWidgets.
         - A toggle for affecting the dictionary text.
+        - A toggle for changing the page font color (EPUB/HTML).
     Optionally, the color can be set with a color picker.
 --]]
 
 local Blitbuffer = require("ffi/blitbuffer")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
+local Event = require("ui/event")
 local FileManager = require("apps/filemanager/filemanager")
+local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
+local ReaderUI = require("apps/reader/readerui")
 local RenderText = require("ui/rendertext")
 local Screen = require("device").screen
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
+local util = require("util")
 
 local function Setting(name, default)
     local self = {}
@@ -32,6 +37,7 @@ local AltNightFontColor = Setting("ui_font_color_alt_night", false)     -- Wheth
 local NightHexFontColor = Setting("ui_font_color_night_hex", "#ffffff") -- RGB hex for the alternative UI font color in night mode (default: #ffffff)
 local TextBoxFontColor = Setting("ui_font_color_textbox", true)         -- Whether the font color of TextBoxWidgets should be changed (default: true)
 local DictionaryFontColor = Setting("ui_font_color_dict", true)         -- Whether the font color of the dictionary should be changed (default: true)
+local PageFontColor = Setting("ui_font_color_reader_page", false)       -- Whether the font color of the page should be changed (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -116,6 +122,11 @@ local function contrast(c1, c2)
     return math.abs(luminance(c1) - luminance(c2))
 end
 
+-- Helper: check if we have a document open
+local function has_document_open()
+    return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
+end
+
 -- Helper: lighten a color by a percentage
 local function lightenColor(c, amount)
     local r = c:getR()
@@ -136,6 +147,7 @@ local cached = {
     invert_in_night_mode = InvertFontColor.get(),
     set_textbox_color = TextBoxFontColor.get(),
     set_dictionary_color = DictionaryFontColor.get(),
+    set_page_color = PageFontColor.get(),
     hex = HexFontColor.get(),
     night_hex = NightHexFontColor.get(),
     last_hex = nil,
@@ -188,6 +200,11 @@ local function setFontColor(hex)
     -- If TextBoxWidget colors are enabled, then update the file list
     if cached.set_textbox_color then
         refreshFileManager()
+    end
+
+    -- Reapply page CSS
+    if cached.set_page_color and has_document_open() then
+        UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
     end
 end
 
@@ -308,6 +325,10 @@ local function font_color_menu()
                         if cached.set_textbox_color then
                             refreshFileManager()
                         end
+
+                        if cached.set_page_color and has_document_open() then
+                            UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                        end
                     end
                 end,
             })
@@ -321,8 +342,14 @@ local function font_color_menu()
                     cached.invert_in_night_mode = InvertFontColor.get()
                     recomputeFGColor()
 
-                    if cached.night_mode and cached.set_textbox_color then
-                        refreshFileManager()
+                    if cached.night_mode then
+                        if cached.set_textbox_color then
+                            refreshFileManager()
+                        end
+
+                        if cached.set_page_color and has_document_open() then
+                            UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                        end
                     end
                 end,
             })
@@ -345,6 +372,19 @@ local function font_color_menu()
                 callback = function()
                     DictionaryFontColor.toggle()
                     cached.set_dictionary_color = DictionaryFontColor.get()
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Apply to reader pages (EPUB/HTML)"),
+                checked_func = PageFontColor.get,
+                callback = function()
+                    PageFontColor.toggle()
+                    cached.set_page_color = PageFontColor.get()
+
+                    if has_document_open() then
+                        UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                    end
                 end,
             })
             return items
@@ -379,9 +419,15 @@ function UIManager:ToggleNightMode()
     cached.night_mode = not cached.night_mode
     recomputeFGColor()
 
-    -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
-    if (cached.alt_night_color or not cached.invert_in_night_mode) and cached.set_textbox_color then
-        refreshFileManager()
+    if cached.alt_night_color or not cached.invert_in_night_mode then
+        -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
+        if cached.set_textbox_color then
+            refreshFileManager()
+        end
+
+        if cached.set_page_color and has_document_open() then
+            UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+        end
     end
 end
 
@@ -394,8 +440,14 @@ function UIManager:SetNightMode(night_mode)
         cached.night_mode = night_mode
         recomputeFGColor()
 
-        if (cached.alt_night_color or not cached.invert_in_night_mode) and cached.set_textbox_color then
-            refreshFileManager()
+        if cached.alt_night_color or not cached.invert_in_night_mode then
+            if cached.set_textbox_color then
+                refreshFileManager()
+            end
+
+            if cached.set_page_color and has_document_open() then
+                UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+            end
         end
     end
 end
@@ -502,6 +554,31 @@ function DictQuickLookup:getHtmlDictionaryCss()
         ]]
 
         return original_css .. custom_css
+    else
+        return original_css
+    end
+end
+
+-- Add font color to reader style tweak CSS if enabled
+local original_ReaderStyleTweak_getCssText = ReaderStyleTweak.getCssText
+
+function ReaderStyleTweak:getCssText()
+    local original_css = original_ReaderStyleTweak_getCssText(self)
+
+    if cached.set_page_color then
+        local fg_hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
+        if cached.night_mode then
+            if cached.alt_night_color or not cached.invert_in_night_mode then
+                fg_hex = invertColor(fg_hex)
+            end
+        end
+
+        local fg_css = [[
+            body {
+                color: ]] .. fg_hex .. [[;
+            }
+        ]]
+        return util.trim(fg_css .. original_css)
     else
         return original_css
     end
