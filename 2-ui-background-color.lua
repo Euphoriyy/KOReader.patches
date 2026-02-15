@@ -628,48 +628,53 @@ function ImageWidget:_loadfile()
             -- and it actually has an alpha channel, compose it against a background-colored BB now, and cache *that*.
             -- This helps us avoid repeating alpha-blending steps down the line,
             -- and also ensures icon highlights/unhighlights behave sensibly.
-            if self.is_icon and not self.alpha then
-                local bbtype = self._bb:getType()
-                if bbtype == Blitbuffer.TYPE_BB8A or bbtype == Blitbuffer.TYPE_BBRGB32 then
-                    -- Invert so that icons stay the same
-                    if Screen.night_mode and not bg_cached.invert_in_night_mode then
-                        self._bb:invert()
-                    end
-
-                    local icon_bb = Blitbuffer.new(self._bb.w, self._bb.h, Screen.bb:getType())
-
-                    -- Fill icon's background with custom background color
-                    if bg_cached.bgcolor then
-                        fillRGB(icon_bb, Screen.bb:getType(), bg_cached.bgcolor)
-                    end
-
-                    -- And now simply compose the icon on top of that, with dithering if necessary
-                    -- Remembering that NanoSVG feeds us straight alpha, unlike MµPDF
-                    if self._is_straight_alpha then
-                        if Screen.sw_dithering then
-                            icon_bb:ditheralphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
-                        else
-                            icon_bb:alphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
+            if self.is_icon then
+                if not self.alpha then
+                    local bbtype = self._bb:getType()
+                    if bbtype == Blitbuffer.TYPE_BB8A or bbtype == Blitbuffer.TYPE_BBRGB32 then
+                        -- Invert so that icons stay the same
+                        if Screen.night_mode and not bg_cached.invert_in_night_mode then
+                            self._bb:invert()
                         end
-                    else
-                        if Screen.sw_dithering then
-                            icon_bb:ditherpmulalphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
-                        else
-                            icon_bb:pmulalphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
+
+                        local icon_bb = Blitbuffer.new(self._bb.w, self._bb.h, Screen.bb:getType())
+
+                        -- Fill icon's background with custom background color
+                        if bg_cached.bgcolor then
+                            fillRGB(icon_bb, Screen.bb:getType(), bg_cached.bgcolor)
                         end
+
+                        -- And now simply compose the icon on top of that, with dithering if necessary
+                        -- Remembering that NanoSVG feeds us straight alpha, unlike MµPDF
+                        if self._is_straight_alpha then
+                            if Screen.sw_dithering then
+                                icon_bb:ditheralphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
+                            else
+                                icon_bb:alphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
+                            end
+                        else
+                            if Screen.sw_dithering then
+                                icon_bb:ditherpmulalphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
+                            else
+                                icon_bb:pmulalphablitFrom(self._bb, 0, 0, 0, 0, icon_bb.w, icon_bb.h)
+                            end
+                        end
+
+                        -- Reinvert back to original
+                        if Screen.night_mode and not bg_cached.invert_in_night_mode then
+                            self._bb:invert()
+                        end
+
+                        -- Save the original alpha-channel icon for alpha masks and the flattened one
+                        self._unflattened = self._bb
+                        self._bb = icon_bb
+
+                        -- There's no longer an alpha channel ;)
+                        self._is_straight_alpha = nil
                     end
-
-                    -- Reinvert back to original
-                    if Screen.night_mode and not bg_cached.invert_in_night_mode then
-                        self._bb:invert()
-                    end
-
-                    -- Save the original alpha-channel icon for alpha masks and the flattened one
-                    self._unflattened = self._bb
-                    self._bb = icon_bb
-
-                    -- There's no longer an alpha channel ;)
-                    self._is_straight_alpha = nil
+                elseif Screen.night_mode and not bg_cached.invert_in_night_mode then
+                    -- Invert icons with alpha so they stay the same
+                    self._bb:invert()
                 end
             end
 
