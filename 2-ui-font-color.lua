@@ -6,6 +6,7 @@
         - A toggle for affecting TextBoxWidgets.
         - A toggle for affecting the dictionary text.
         - A toggle for changing the page font color (epub, html, fb2, txt...).
+        - A toggle to change the color only in the reader.
     Optionally, the color can be set with a color picker.
 --]]
 
@@ -38,6 +39,7 @@ local NightHexFontColor = Setting("ui_font_color_night_hex", "#ffffff") -- RGB h
 local TextBoxFontColor = Setting("ui_font_color_textbox", true)         -- Whether the font color of TextBoxWidgets should be changed (default: true)
 local DictionaryFontColor = Setting("ui_font_color_dict", true)         -- Whether the font color of the dictionary should be changed (default: true)
 local PageFontColor = Setting("ui_font_color_reader_page", false)       -- Whether the font color of the page should be changed (default: false)
+local ReaderOnlyFontColor = Setting("ui_font_color_reader_only", false) -- Whether the font color should be changed in the reader only (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -148,6 +150,7 @@ local cached = {
     set_textbox_color = TextBoxFontColor.get(),
     set_dictionary_color = DictionaryFontColor.get(),
     set_page_color = PageFontColor.get(),
+    reader_only = ReaderOnlyFontColor.get(),
     hex = HexFontColor.get(),
     night_hex = NightHexFontColor.get(),
     last_hex = nil,
@@ -387,6 +390,23 @@ local function font_color_menu()
                     end
                 end,
             })
+
+            table.insert(items, {
+                text = _("Apply in reader only"),
+                checked_func = ReaderOnlyFontColor.get,
+                callback = function()
+                    ReaderOnlyFontColor.toggle()
+                    cached.reader_only = ReaderOnlyFontColor.get()
+
+                    if cached.set_textbox_color then
+                        refreshFileManager()
+                    end
+
+                    if has_document_open() and cached.set_page_color then
+                        UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
+                    end
+                end,
+            })
             return items
         end,
     }
@@ -470,8 +490,9 @@ function TextWidget:paintTo(bb, x, y)
         self.fgcolor = cached.fgcolor
     end
 
-    -- Use original B/W TextWidget painting method if color is not enabled
-    if not Screen:isColorEnabled() then
+    -- Use original B/W TextWidget painting method if color is not enabled,
+    -- or if reader only is enabled and not in reader
+    if not Screen:isColorEnabled() or (cached.reader_only and not has_document_open()) then
         original_TextWidget_paintTo(self, bb, x, y)
         self.fgcolor = original_fgcolor
     else
@@ -525,7 +546,7 @@ local original_TextBoxWidget_renderText = TextBoxWidget._renderText
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
     local original_fgcolor = self.fgcolor
 
-    if cached.set_textbox_color then
+    if cached.set_textbox_color and not (cached.reader_only and not has_document_open()) then
         self.fgcolor = cached.fgcolor
     end
 
@@ -540,7 +561,7 @@ local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDic
 function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
-    if cached.set_dictionary_color then
+    if cached.set_dictionary_color and not (cached.reader_only and not has_document_open()) then
         local fg_hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
         if cached.night_mode then
             if cached.alt_night_color or not cached.invert_in_night_mode then

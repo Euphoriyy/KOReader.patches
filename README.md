@@ -41,6 +41,7 @@ Besides the color, it has options for:
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle for the dictionary text.
 - A toggle to change the page font color. (epub, html, fb2, txt...)
+- A toggle to change the color only in the reader.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
