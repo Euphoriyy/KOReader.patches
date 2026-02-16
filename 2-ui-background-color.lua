@@ -37,6 +37,7 @@ local UnderlineContainer = require("ui/widget/container/underlinecontainer")
 local VirtualKeyboard = require("ui/widget/virtualkeyboard")
 local ffi = require("ffi")
 local logger = require("logger")
+local userpatch = require("userpatch")
 local util = require("util")
 
 local function Setting(name, default)
@@ -1096,3 +1097,76 @@ function VirtualKeyboard:onShow()
 
     return original_VirtualKeyboard_onShow(self)
 end
+
+-- Declare original methods before patching the plugin to prevent nested patching
+local original_CalendarWeek_update, original_CalendarDayView_generateSpan, original_BookDailyItem_init
+
+-- Restore background colors to reading statistics calendar (plugin)
+userpatch.registerPatchPluginFunc("statistics", function()
+    local CalendarView = require("calendarview")
+    if not CalendarView then return end
+
+    local CalendarWeek = userpatch.getUpValue(CalendarView._populateItems, "CalendarWeek")
+    if CalendarWeek then
+        if not original_CalendarWeek_update then
+            original_CalendarWeek_update = CalendarWeek.update
+        end
+
+        function CalendarWeek:update()
+            original_CalendarWeek_update(self)
+
+            local overlaps = self[1][1]
+            local span_index = 2
+
+            for col, day_books in ipairs(self.days_books) do
+                for _, book in ipairs(day_books) do
+                    if book and book.start_day == col then
+                        local span_w = overlaps[span_index][1]
+                        span_index = span_index + 1
+
+                        span_w.original_background = span_w.background
+                        span_w.background = EXCLUSION_COLOR
+                    end
+                end
+            end
+        end
+    end
+
+    local CalendarDayView = userpatch.getUpValue(CalendarView._populateItems, "CalendarDayView")
+    if not CalendarDayView then return end
+
+    if not original_CalendarDayView_generateSpan then
+        original_CalendarDayView_generateSpan = CalendarDayView.generateSpan
+    end
+
+    function CalendarDayView:generateSpan(start, finish, bgcolor, fgcolor, title)
+        local span = original_CalendarDayView_generateSpan(self, start, finish, bgcolor, fgcolor, title)
+        if span then
+            span.original_background = span.background
+            span.background = EXCLUSION_COLOR
+        end
+        return span
+    end
+
+    local BookDailyItem = userpatch.getUpValue(CalendarDayView._populateBooks, "BookDailyItem")
+    if not BookDailyItem then return end
+
+    if not original_BookDailyItem_init then
+        original_BookDailyItem_init = BookDailyItem.init
+    end
+
+    function BookDailyItem:init()
+        original_BookDailyItem_init(self)
+
+        local container = self[1]
+        local left_container = container and container[1]
+        local horizontal_group = left_container and left_container[1]
+        local overlap_group = horizontal_group and horizontal_group[3]
+        local span = overlap_group and overlap_group[1]
+
+        if span then
+            span.original_background = span.background
+            span.background = EXCLUSION_COLOR
+        end
+    end
+end)
