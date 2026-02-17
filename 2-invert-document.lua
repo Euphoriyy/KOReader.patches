@@ -12,8 +12,9 @@ local optionsutil = require("ui/data/optionsutil")
 local _ = require("gettext")
 
 for __, section in ipairs(KoptOptions) do
-    if section.icon == "appbar.contrast" then
-        table.insert(section.options, {
+    if section.icon == "appbar.settings" then
+        local index = math.max(#section.options, 1)
+        table.insert(section.options, index, {
             name = "nightmode_document",
             name_text = _("Invert Document"),
             toggle = { _("off"), _("on") },
@@ -21,7 +22,7 @@ for __, section in ipairs(KoptOptions) do
             default_value = 0,
             show_func = function() return Screen.night_mode end,
             name_text_hold_callback = optionsutil.showValues,
-            help_text = _([[Invert document in night mode. Useful for image heavy documents such as comics and manga.]]),
+            help_text = _([[Invert document in night mode. Useful for image heavy documents such as comics or manga.]]),
         })
         break
     end
