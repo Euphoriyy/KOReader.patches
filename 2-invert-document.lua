@@ -59,10 +59,7 @@ function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, ro
                 rect.x - tile.excerpt.x,
                 rect.y - tile.excerpt.y,
                 rect.w, rect.h)
-            target:invertblitFrom(target,
-                x, y,
-                x, y,
-                rect.w, rect.h)
+            target:invertRect(x, y, rect.w, rect.h)
         else
             -- Dewatermark disabled: invert blit from tile
             target:invertblitFrom(tile.bb,
