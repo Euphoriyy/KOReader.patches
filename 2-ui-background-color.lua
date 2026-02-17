@@ -1127,7 +1127,13 @@ userpatch.registerPatchPluginFunc("statistics", function()
                         local span_w = overlaps[span_index][1]
                         span_index = span_index + 1
 
-                        span_w.original_background = span_w.background
+                        if bg_cached.night_mode and
+                            (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
+                            span_w.original_background = span_w.background:invert()
+                        else
+                            span_w.original_background = span_w.background
+                        end
+
                         span_w.background = EXCLUSION_COLOR
                     end
                 end
@@ -1145,7 +1151,13 @@ userpatch.registerPatchPluginFunc("statistics", function()
     function CalendarDayView:generateSpan(start, finish, bgcolor, fgcolor, title)
         local span = original_CalendarDayView_generateSpan(self, start, finish, bgcolor, fgcolor, title)
         if span then
-            span.original_background = span.background
+            if bg_cached.night_mode and
+                (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
+                span.original_background = span.background:invert()
+            else
+                span.original_background = span.background
+            end
+
             span.background = EXCLUSION_COLOR
         end
         return span
@@ -1168,7 +1180,13 @@ userpatch.registerPatchPluginFunc("statistics", function()
         local span = overlap_group and overlap_group[1]
 
         if span then
-            span.original_background = span.background
+            if bg_cached.night_mode and
+                (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
+                span.original_background = span.background:invert()
+            else
+                span.original_background = span.background
+            end
+
             span.background = EXCLUSION_COLOR
         end
     end
