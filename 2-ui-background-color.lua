@@ -634,7 +634,8 @@ function ImageWidget:_loadfile()
                     local bbtype = self._bb:getType()
                     if bbtype == Blitbuffer.TYPE_BB8A or bbtype == Blitbuffer.TYPE_BBRGB32 then
                         -- Invert so that icons stay the same
-                        if Screen.night_mode and not bg_cached.invert_in_night_mode then
+                        if Screen.night_mode and
+                            (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
                             self._bb:invert()
                         end
 
@@ -662,7 +663,8 @@ function ImageWidget:_loadfile()
                         end
 
                         -- Reinvert back to original
-                        if Screen.night_mode and not bg_cached.invert_in_night_mode then
+                        if Screen.night_mode and
+                            (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
                             self._bb:invert()
                         end
 
@@ -673,7 +675,8 @@ function ImageWidget:_loadfile()
                         -- There's no longer an alpha channel ;)
                         self._is_straight_alpha = nil
                     end
-                elseif Screen.night_mode and not bg_cached.invert_in_night_mode then
+                elseif Screen.night_mode and
+                    (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
                     -- Invert icons with alpha so they stay the same
                     self._bb:invert()
                 end
@@ -770,7 +773,7 @@ function ImageWidget:paintTo(bb, x, y)
         -- Then, use it as an alpha mask with a fg color set at the middle point of the eInk palette
         -- (much like black after the default dim)
         local fgcolor = Blitbuffer.COLOR_DARK_GRAY
-        if Screen.night_mode and not bg_cached.invert_in_night_mode then
+        if Screen.night_mode and (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
             fgcolor = fgcolor:invert()
         end
         bb:colorblitFromRGB32(icon_bb, x, y, self._offset_x, self._offset_y, size.w, size.h, fgcolor)
@@ -798,14 +801,14 @@ end
 
 -- Reload icon images on night mode state changes
 function IconWidget:onToggleNightMode()
-    if not bg_cached.invert_in_night_mode then
+    if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
         self:free()
         self:init()
     end
 end
 
 function IconWidget:onSetNightMode(night_mode)
-    if bg_cached.night_mode ~= night_mode and not bg_cached.invert_in_night_mode then
+    if bg_cached.night_mode ~= night_mode and (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
         self:free()
         self:init()
     end
