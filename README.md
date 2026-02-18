@@ -75,6 +75,12 @@ Made for koreader/koreader#9899.
 
 <img src="img/invert-document.png" style="width:50%; height:auto;">
 
+### [🞂 2-correct-screen-borders.lua](2-correct-screen-borders.lua)
+This patch adds border lines to the sides of the screen to correct for e-ink issues.
+Made for [this post by wigglytoad](https://www.reddit.com/r/koreader/comments/1r7l5co/request_patch_to_remove_1pixelwide_vertical_white/).
+
+It can be configured under **🞂 Screen 🞂 Border correction** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+
 ## Widgets
 
 Widgets allow for additional functionality for patches. Developers use them to provide unique ways to configure options.
