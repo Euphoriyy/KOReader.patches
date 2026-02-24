@@ -81,6 +81,17 @@ Made for [this post by wigglytoad](https://www.reddit.com/r/koreader/comments/1r
 
 It can be configured under **🞂 Screen 🞂 Border correction** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
+### [🞂 2-percent-badge.lua](2-percent-badge.lua)
+This patch adds a customizable badge that displays the percentage read for each book. It also displays whether a book has been completed or paused.
+
+It has inline option variables at the start of the file.
+
+In comparison to the original, it adds two new additional features:
+- The ability to not be inverted in night mode when used together with the [UI background color patch](https://github.com/Euphoriyy/KOReader.patches#-2-ui-background-colorlua).
+- The inline option to exclude the text color from being modified by the [UI font color patch](https://github.com/Euphoriyy/KOReader.patches#-2-ui-font-colorlua).
+
+Edited from [the version by angelsangita](https://github.com/angelsangita/Koreader-Patches?tab=readme-ov-file#-2-percent-badge).
+
 ## Widgets
 
 Widgets allow for additional functionality for patches. Developers use them to provide unique ways to configure options.
