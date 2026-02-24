@@ -472,14 +472,19 @@ function UIManager:SetNightMode(night_mode)
     end
 end
 
+-- Special color which indicates that the color should either stay black or be set to the original fgcolor
+local EXCLUSION_COLOR = Blitbuffer.colorFromString("#DAAAAD")
+
 -- Hook into TextWidget painting
 local original_TextWidget_paintTo = TextWidget.paintTo
 
 function TextWidget:paintTo(bb, x, y)
     local original_fgcolor = self.fgcolor
 
-    -- If the original color was dark gray, then place a lighter color
-    if colorEquals(original_fgcolor, Blitbuffer.COLOR_DARK_GRAY) then
+    if colorEquals(original_fgcolor, EXCLUSION_COLOR) then
+        self.fgcolor = self.original_fgcolor or Blitbuffer.COLOR_BLACK
+    elseif colorEquals(original_fgcolor, Blitbuffer.COLOR_DARK_GRAY) then
+        -- If the original color was dark gray, then place a lighter color
         self.fgcolor = lightenColor(cached.fgcolor, 0.5)
 
         -- Set font color to dark gray when more contrast is needed
