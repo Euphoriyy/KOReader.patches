@@ -12,6 +12,8 @@
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("ui/widget/button")
+local ButtonDialog = require("ui/widget/buttondialog")
+local ButtonTable = require("ui/widget/buttontable")
 local Cache = require("cache")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
 local Event = require("ui/event")
@@ -24,6 +26,7 @@ local ImageWidget = require("ui/widget/imagewidget")
 local InputText = require("ui/widget/inputtext")
 local LineWidget = require("ui/widget/linewidget")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
+local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
 local ReaderUI = require("apps/reader/readerui")
 local RenderImage = require("ui/renderimage")
@@ -1191,3 +1194,47 @@ userpatch.registerPatchPluginFunc("statistics", function()
         end
     end
 end)
+
+-- Restore background colors to the reader highlight color dialog
+function ReaderHighlight:showHighlightColorDialog(caller_callback, curr_color)
+    local dialog
+    local buttons = {}
+    for i, v in ipairs(self.highlight_colors) do
+        local color_name, color = unpack(v)
+        buttons[i] = { {
+            text = color ~= curr_color and color_name or color_name .. "  ✓",
+            menu_style = true,
+            original_background = self:getHighlightColor(color),
+            background = EXCLUSION_COLOR,
+            callback = function()
+                if color ~= curr_color then
+                    caller_callback(color)
+                end
+                UIManager:close(dialog)
+            end,
+        } }
+    end
+    dialog = ButtonDialog:new {
+        buttons = buttons,
+        width_factor = 0.4,
+        colorful = true,
+        dithered = true,
+    }
+    UIManager:show(dialog)
+end
+
+-- Propagate original_background from the button table entries to each button's FrameContainer
+local original_ButtonTable_init = ButtonTable.init
+
+function ButtonTable:init()
+    original_ButtonTable_init(self)
+
+    for i = 1, #self.buttons_layout do
+        for j = 1, #self.buttons_layout[i] do
+            local btn_entry = self.buttons[i][j]
+            if btn_entry and btn_entry.original_background then
+                self.buttons_layout[i][j][1].original_background = btn_entry.original_background
+            end
+        end
+    end
+end
