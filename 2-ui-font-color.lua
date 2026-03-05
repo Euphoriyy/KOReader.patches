@@ -474,6 +474,11 @@ end
 
 -- Special color which indicates that the color should either stay black or be set to the original fgcolor
 local EXCLUSION_COLOR = Blitbuffer.colorFromString("#DAAAAD")
+local EXCLUSION_COLOR_RGB32 = EXCLUSION_COLOR:getColorRGB32()
+
+local function is_excluded(color)
+    return color and color:getColorRGB32() == EXCLUSION_COLOR_RGB32
+end
 
 -- Hook into TextWidget painting
 local original_TextWidget_paintTo = TextWidget.paintTo
@@ -481,7 +486,7 @@ local original_TextWidget_paintTo = TextWidget.paintTo
 function TextWidget:paintTo(bb, x, y)
     local original_fgcolor = self.fgcolor
 
-    if colorEquals(original_fgcolor, EXCLUSION_COLOR) then
+    if is_excluded(original_fgcolor) then
         self.fgcolor = self.original_fgcolor or Blitbuffer.COLOR_BLACK
     elseif colorEquals(original_fgcolor, Blitbuffer.COLOR_DARK_GRAY) then
         -- If the original color was dark gray, then place a lighter color

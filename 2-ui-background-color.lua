@@ -476,6 +476,11 @@ end
 -- Special color which indicates that the color should either stay white or be set to the original bgcolor
 -- Used for ReaderFooter option and ScreenSaverWidget
 local EXCLUSION_COLOR = Blitbuffer.colorFromString("#DAAAAD")
+local EXCLUSION_COLOR_RGB32 = EXCLUSION_COLOR:getColorRGB32()
+
+local function is_excluded(color)
+    return color and color:getColorRGB32() == EXCLUSION_COLOR_RGB32
+end
 
 -- Hook into FrameContainer painting (responsible for 80% of background)
 local original_FrameContainer_paintTo = FrameContainer.paintTo
@@ -486,7 +491,7 @@ function FrameContainer:paintTo(bb, x, y)
 
     -- Change background color if it isn't transparent (nil)
     if original_background then
-        if not colorEquals(original_background, EXCLUSION_COLOR) then
+        if not is_excluded(original_background) then
             self.background = bg_cached.bgcolor
             self.color = bg_cached.bgcolor:invert()
         else
