@@ -1081,9 +1081,13 @@ function ReaderStyleTweak:getCssText()
 end
 
 -- Restore virtual keyboard key border with appropriate color
-local original_VirtualKeyboard_onShow = VirtualKeyboard.onShow
+local original_VirtualKeyboard_addKeys = VirtualKeyboard.addKeys
 
-function VirtualKeyboard:onShow()
+local MIN_KEY_BORDER_CONTRAST = 5
+
+function VirtualKeyboard:addKeys()
+    original_VirtualKeyboard_addKeys(self)
+
     local border_color = Blitbuffer.ColorRGB32(
         bg_cached.bgcolor:getR() * 0.6,
         bg_cached.bgcolor:getG() * 0.6,
@@ -1091,17 +1095,17 @@ function VirtualKeyboard:onShow()
     )
 
     -- Set border color to dark gray when more contrast is needed
-    if contrast(border_color, bg_cached.bgcolor) < 5 then
+    if contrast(border_color, bg_cached.bgcolor) < MIN_KEY_BORDER_CONTRAST then
         border_color = Blitbuffer.COLOR_DARK_GRAY
     end
 
+    local keyboard_frame = self[1][1]
+
     -- Key border
     if G_reader_settings:nilOrTrue("keyboard_key_border") then
-        self[1][1].original_background = border_color
-        self[1][1].background = EXCLUSION_COLOR
+        keyboard_frame.original_background = border_color
+        keyboard_frame.background = EXCLUSION_COLOR
     end
-
-    return original_VirtualKeyboard_onShow(self)
 end
 
 -- Declare original methods before patching the plugin to prevent nested patching
