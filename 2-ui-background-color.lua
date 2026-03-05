@@ -196,9 +196,9 @@ local bg_cached = {
     bgcolor = nil,
 }
 
--- Recompute and cache the final bgcolor based on current settings
+-- Recompute and cache the final colors based on current settings
 -- Applies night mode inversion if enabled, and updates bg_cached.bgcolor only if it has changed
-local function recomputeBGColor()
+local function recomputeColors()
     local hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
     if bg_cached.night_mode then
         if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
@@ -209,10 +209,16 @@ local function recomputeBGColor()
         bg_cached.bgcolor = Blitbuffer.colorFromString(hex)
         bg_cached.last_hex = hex
     end
+
+    bg_cached.fgcolor = Blitbuffer.ColorRGB32(
+        bg_cached.bgcolor:getR() * 0.6,
+        bg_cached.bgcolor:getG() * 0.6,
+        bg_cached.bgcolor:getB() * 0.6
+    )
 end
 
--- Compute and cache the initial bgcolor based on current settings
-recomputeBGColor()
+-- Compute and cache the initial bgcolor/fgcolor based on current settings
+recomputeColors()
 
 local function refreshFileManager()
     if FileManager.instance then
@@ -247,7 +253,7 @@ local function setBackgroundColor(hex)
         HexBackgroundColor.set(hex)
         bg_cached.hex = hex
     end
-    recomputeBGColor()
+    recomputeColors()
 
     -- If TextBoxWidget colors are enabled, then update the file list
     if bg_cached.set_textbox_color then
@@ -374,7 +380,7 @@ local function background_color_menu()
                     bg_cached.alt_night_color = AltNightBackgroundColor.get()
 
                     if bg_cached.night_mode then
-                        recomputeBGColor()
+                        recomputeColors()
 
                         reloadIcons()
 
@@ -396,7 +402,7 @@ local function background_color_menu()
                 callback = function()
                     InvertBackgroundColor.toggle()
                     bg_cached.invert_in_night_mode = InvertBackgroundColor.get()
-                    recomputeBGColor()
+                    recomputeColors()
 
 
                     if bg_cached.night_mode then
@@ -829,7 +835,7 @@ function UIManager:ToggleNightMode()
     original_UIManager_ToggleNightMode(self)
 
     bg_cached.night_mode = not bg_cached.night_mode
-    recomputeBGColor()
+    recomputeColors()
 
     if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
         -- Refresh files if CoverBrowser is affected and night mode inversion is not enabled
@@ -852,7 +858,7 @@ function UIManager:SetNightMode(night_mode)
 
     if bg_cached.night_mode ~= night_mode then
         bg_cached.night_mode = night_mode
-        recomputeBGColor()
+        recomputeColors()
 
         if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
             if bg_cached.set_textbox_color then
@@ -1002,11 +1008,7 @@ end
 
 -- Replace ToggleSwitch update method to use appropriate fgcolor
 function ToggleSwitch:update()
-    self.fgcolor = Blitbuffer.ColorRGB32(
-        bg_cached.bgcolor:getR() * 0.6,
-        bg_cached.bgcolor:getG() * 0.6,
-        bg_cached.bgcolor:getB() * 0.6
-    )
+    self.fgcolor = bg_cached.fgcolor
 
     local pos = self.position
     for i = 1, #self.toggle_content do
@@ -1093,11 +1095,7 @@ local MIN_KEY_BORDER_CONTRAST = 5
 function VirtualKeyboard:addKeys()
     original_VirtualKeyboard_addKeys(self)
 
-    local border_color = Blitbuffer.ColorRGB32(
-        bg_cached.bgcolor:getR() * 0.6,
-        bg_cached.bgcolor:getG() * 0.6,
-        bg_cached.bgcolor:getB() * 0.6
-    )
+    local border_color = bg_cached.fgcolor
 
     -- Set border color to dark gray when more contrast is needed
     if contrast(border_color, bg_cached.bgcolor) < MIN_KEY_BORDER_CONTRAST then
