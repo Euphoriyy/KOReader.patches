@@ -541,7 +541,7 @@ local function parseColorSegments(input, default_color)
 
     while pos <= #input do
         local ms, color_str, me_open = input:match("()" .. SEP .. "([#%w][#%w]+) ()", pos)
-        local rs, me_close = input:match("()" .. SEP .. "r()[ %d]", pos)
+        local rs, me_close = input:match("()" .. SEP .. "r()[ %d%u]", pos)
         if not rs then rs, me_close = input:match("()" .. SEP .. "r()$", pos) end
 
         local next_event, event_type
@@ -580,9 +580,9 @@ local function hasColorMarkers(text)
 end
 
 local function stripColorMarkers(text)
-    text = text:gsub(SEP .. "[#%w][#%w]+ ", "") -- opening tags (2+ chars)
-    text = text:gsub(SEP .. "r([ %d])", "%1")   -- followed by space or digit
-    text = text:gsub(SEP .. "r$", "")           -- at end of string
+    text = text:gsub(SEP .. "[#%w][#%w]+ ", "") -- Opening tags (2+ chars)
+    text = text:gsub(SEP .. "r([ %d%u])", "%1") -- Followed by space, digit, or uppercase
+    text = text:gsub(SEP .. "r$", "")           -- At end of string
     return text
 end
 
@@ -622,13 +622,13 @@ function TextWidget:updateSize()
             if not self._text_unstripped then
                 self._text_unstripped = self.text
                 self.text = stripColorMarkers(self.text)
-                self._updated = nil -- force recompute with stripped text
+                self._updated = nil -- Force recompute with stripped text
             end
         else
             if not self._text_unstripped then
                 self._text_unstripped = self.text
                 self.text = stripColorMarkers(self.text)
-                self._updated = nil -- force recompute with stripped text
+                self._updated = nil -- Force recompute with stripped text
             end
         end
     end
@@ -680,11 +680,10 @@ function TextWidget:paintTo(bb, x, y)
             if has_markers then
                 local cursor_x = x
                 for _, seg in ipairs(self._color_segments) do
-                    local seg_color = seg.color or self.fgcolor
                     local seg_w = RenderText:sizeUtf8Text(cursor_x, bb:getWidth(), self.face, seg.text, true, self.bold)
                         .x
                     RenderText:renderUtf8Text(bb, cursor_x, y + self._baseline_h, self.face, seg.text,
-                        true, self.bold, seg_color, seg_w)
+                        true, self.bold, seg.color or self.fgcolor, seg_w)
                     cursor_x = cursor_x + seg_w
                 end
             else
