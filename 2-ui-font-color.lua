@@ -44,7 +44,7 @@ local TextBoxFontColor = Setting("ui_font_color_textbox", true)            -- Wh
 local DictionaryFontColor = Setting("ui_font_color_dict", true)            -- Whether the font color of the dictionary should be changed (default: true)
 local PageFontColor = Setting("ui_font_color_reader_page", false)          -- Whether the font color of the page should be changed (default: false)
 local ReaderOnlyFontColor = Setting("ui_font_color_reader_only", false)    -- Whether the font color should be changed in the reader only (default: false)
-local MarkupColors = Setting("ui_font_color_markup", true)                 -- Whether the markup colors should be enabled (default: true)
+local MarkupColors = Setting("ui_font_color_markup", false)                -- Whether the markup colors should be enabled (default: false)
 local InvertMarkupColors = Setting("ui_font_color_inverted_markup", false) -- Whether the markup colors should be inverted in night mode (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"

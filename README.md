@@ -33,7 +33,7 @@ Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/Intro
 ### [🞂 2-ui-font-color.lua](2-ui-font-color.lua)
 This patch adds the ability to change the RGB color of the UI font.
 
-It also adds inline markup color support in UI text with the following syntax:
+It also adds inline markup color support (disabled by default) to UI text with the following syntax:
 
 > **§color** text **§r**
 
