@@ -1,5 +1,6 @@
 --[[
     This user patch allows for changing the UI font color.
+    It also provides supports for inline markup colors in TextWidgets (UI text).
     It has the following menu options in addition to the color:
         - A toggle to use an alternative color in night mode.
         - A toggle to invert it in night mode.
@@ -7,6 +8,7 @@
         - A toggle for affecting the dictionary text.
         - A toggle for changing the page font color (epub, html, fb2, txt...).
         - A toggle to change the color only in the reader.
+        - A toggle to invert markup colors in night mode.
     Optionally, the color can be set with a color picker.
 --]]
 
@@ -21,6 +23,7 @@ local Screen = require("device").screen
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
+local bit = require("bit")
 local util = require("util")
 
 local function Setting(name, default)
@@ -32,14 +35,15 @@ local function Setting(name, default)
 end
 
 -- Settings
-local HexFontColor = Setting("ui_font_color_hex", "#000000")            -- RGB hex for UI font color (default: #000000)
-local InvertFontColor = Setting("ui_font_color_inverted", true)         -- Whether the UI font color should be inverted in night mode (default: true)
-local AltNightFontColor = Setting("ui_font_color_alt_night", false)     -- Whether the UI font color should be changed to an alternative color in night mode (default: false)
-local NightHexFontColor = Setting("ui_font_color_night_hex", "#ffffff") -- RGB hex for the alternative UI font color in night mode (default: #ffffff)
-local TextBoxFontColor = Setting("ui_font_color_textbox", true)         -- Whether the font color of TextBoxWidgets should be changed (default: true)
-local DictionaryFontColor = Setting("ui_font_color_dict", true)         -- Whether the font color of the dictionary should be changed (default: true)
-local PageFontColor = Setting("ui_font_color_reader_page", false)       -- Whether the font color of the page should be changed (default: false)
-local ReaderOnlyFontColor = Setting("ui_font_color_reader_only", false) -- Whether the font color should be changed in the reader only (default: false)
+local HexFontColor = Setting("ui_font_color_hex", "#000000")               -- RGB hex for UI font color (default: #000000)
+local InvertFontColor = Setting("ui_font_color_inverted", true)            -- Whether the UI font color should be inverted in night mode (default: true)
+local AltNightFontColor = Setting("ui_font_color_alt_night", false)        -- Whether the UI font color should be changed to an alternative color in night mode (default: false)
+local NightHexFontColor = Setting("ui_font_color_night_hex", "#ffffff")    -- RGB hex for the alternative UI font color in night mode (default: #ffffff)
+local TextBoxFontColor = Setting("ui_font_color_textbox", true)            -- Whether the font color of TextBoxWidgets should be changed (default: true)
+local DictionaryFontColor = Setting("ui_font_color_dict", true)            -- Whether the font color of the dictionary should be changed (default: true)
+local PageFontColor = Setting("ui_font_color_reader_page", false)          -- Whether the font color of the page should be changed (default: false)
+local ReaderOnlyFontColor = Setting("ui_font_color_reader_only", false)    -- Whether the font color should be changed in the reader only (default: false)
+local InvertMarkupColors = Setting("ui_font_color_inverted_markup", false) -- Whether the markup colors should be inverted in night mode (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -407,6 +411,14 @@ local function font_color_menu()
                     end
                 end,
             })
+
+            table.insert(items, {
+                text = _("Invert markup colors in night mode"),
+                checked_func = InvertMarkupColors.get,
+                callback = function()
+                    InvertMarkupColors.toggle()
+                end,
+            })
             return items
         end,
     }
@@ -472,6 +484,128 @@ function UIManager:SetNightMode(night_mode)
     end
 end
 
+-- Color parsing helpers
+local COLOR_MAP = {
+    black    = Blitbuffer.COLOR_BLACK,
+    white    = Blitbuffer.COLOR_WHITE,
+    gray     = Blitbuffer.COLOR_GRAY,
+    darkgray = Blitbuffer.COLOR_DARK_GRAY,
+    red      = Blitbuffer.colorFromName("red"),
+    orange   = Blitbuffer.colorFromName("orange"),
+    yellow   = Blitbuffer.colorFromName("yellow"),
+    green    = Blitbuffer.colorFromName("green"),
+    olive    = Blitbuffer.colorFromName("olive"),
+    cyan     = Blitbuffer.colorFromName("cyan"),
+    blue     = Blitbuffer.colorFromName("blue"),
+    purple   = Blitbuffer.colorFromName("purple"),
+    pink     = Blitbuffer.colorFromName("#FF8DA1"),
+}
+
+local function parseColor(color_str, default_color)
+    color_str = color_str:lower():gsub("%s", "")
+    local named = COLOR_MAP[color_str]
+    if named then return named end
+    local hex = color_str:match("^#(%x+)$")
+    if hex then
+        if #hex == 3 then
+            hex = hex:sub(1, 1):rep(2) .. hex:sub(2, 2):rep(2) .. hex:sub(3, 3):rep(2)
+        end
+        local n = tonumber(hex, 16)
+        if n then
+            return Blitbuffer.ColorRGB32(
+                bit.rshift(bit.band(n, 0xFF0000), 16),
+                bit.rshift(bit.band(n, 0x00FF00), 8),
+                bit.band(n, 0x0000FF)
+            )
+        end
+    end
+    return default_color
+end
+
+local SEP = "\xC2\xA7" -- § as explicit raw bytes
+
+local function parseColorSegments(input, default_color)
+    local segments = {}
+    local pos = 1
+    local current_color = nil
+
+    while pos <= #input do
+        local ms, color_str, me_open = input:match("()" .. SEP .. "([#%w][#%w]+) ()", pos)
+        local rs, me_close = input:match("()" .. SEP .. "r()[ %d]", pos)
+        if not rs then rs, me_close = input:match("()" .. SEP .. "r()$", pos) end
+
+        local next_event, event_type
+        if ms and (not rs or ms < rs) then
+            next_event, event_type = ms, "open"
+        elseif rs then
+            next_event, event_type = rs, "close"
+        end
+
+        if not next_event then
+            local plain = input:sub(pos)
+            if #plain > 0 then
+                table.insert(segments, { text = plain, color = current_color })
+            end
+            break
+        end
+
+        local plain = input:sub(pos, next_event - 1)
+        if #plain > 0 then
+            table.insert(segments, { text = plain, color = current_color })
+        end
+
+        if event_type == "open" then
+            current_color = parseColor(color_str, default_color)
+            pos = me_open
+        else
+            current_color = nil
+            pos = me_close
+        end
+    end
+    return segments
+end
+
+local function hasColorMarkers(text)
+    return type(text) == "string" and text:find(SEP .. "[#%w]") ~= nil
+end
+
+local function stripColorMarkers(text)
+    text = text:gsub(SEP .. "[#%w][#%w]+ ", "") -- opening tags (2+ chars)
+    text = text:gsub(SEP .. "r([ %d])", "%1")   -- followed by space or digit
+    text = text:gsub(SEP .. "r$", "")           -- at end of string
+    return text
+end
+
+-- Replace setText method so that it recomputes the colored text on changes
+function TextWidget:setText(text)
+    if text == self.text then
+        return
+    end
+
+    self._text_unstripped = nil
+    self._color_segments = nil
+    self._updated = nil
+
+    self.text = text
+    self:free()
+end
+
+-- Hook into TextWidget updateSize to preprocess color markers before xtext sees the text
+local original_TextWidget_updateSize = TextWidget.updateSize
+function TextWidget:updateSize()
+    if hasColorMarkers(self.text) then
+        if not self._color_segments then
+            self._color_segments = parseColorSegments(self.text, self.fgcolor)
+        end
+        if not self._text_unstripped then
+            self._text_unstripped = self.text
+            self.text = stripColorMarkers(self.text)
+            self._updated = nil -- force recompute with stripped text
+        end
+    end
+    original_TextWidget_updateSize(self)
+end
+
 -- Special color which indicates that the color should either stay black or be set to the original fgcolor
 local EXCLUSION_COLOR = Blitbuffer.colorFromString("#DAAAAD")
 local EXCLUSION_COLOR_RGB32 = EXCLUSION_COLOR:getColorRGB32()
@@ -511,9 +645,22 @@ function TextWidget:paintTo(bb, x, y)
             return
         end
 
+        local has_markers = self._color_segments ~= nil
+
         if not self.use_xtext then
-            RenderText:renderUtf8Text(bb, x, y + self._baseline_h, self.face, self._text_to_draw,
-                true, self.bold, self.fgcolor, self._length)
+            if has_markers then
+                local cursor_x = x
+                for _, seg in ipairs(self._color_segments) do
+                    local seg_w = RenderText:sizeUtf8Text(cursor_x, bb:getWidth(), self.face, seg.text, true, self.bold)
+                        .x
+                    RenderText:renderUtf8Text(bb, cursor_x, y + self._baseline_h, self.face, seg.text,
+                        true, self.bold, seg.color, seg_w)
+                    cursor_x = cursor_x + seg_w
+                end
+            else
+                RenderText:renderUtf8Text(bb, x, y + self._baseline_h, self.face, self._text_to_draw,
+                    true, self.bold, self.fgcolor, self._length)
+            end
             return
         end
 
@@ -528,6 +675,21 @@ function TextWidget:paintTo(bb, x, y)
         if self.max_width and self.max_width < text_width then
             text_width = self.max_width
         end
+
+        -- Build byte offset → color map from stripped segments so it aligns
+        -- with what xtext/HarfBuzz shaped (which saw the stripped text)
+        local cluster_colors = nil
+        if has_markers then
+            cluster_colors = {}
+            local char_index = 1 -- text_index is 1-based
+            for _, seg in ipairs(self._color_segments) do
+                for uchar in seg.text:gmatch(".[\128-\191]*") do
+                    cluster_colors[char_index] = seg.color
+                    char_index = char_index + 1
+                end
+            end
+        end
+
         local pen_x = 0
         local baseline = self.forced_baseline or self._baseline_h
         for i, xglyph in ipairs(self._xshaping) do
@@ -536,13 +698,20 @@ function TextWidget:paintTo(bb, x, y)
             end
             local face = self.face.getFallbackFont(xglyph.font_num) -- callback (not a method)
             local glyph = RenderText:getGlyphByIndex(face, xglyph.glyph, self.bold)
+
+            -- Markup color for glyph (can be nil if falling back to fgcolor)
+            local glyph_color = (cluster_colors and cluster_colors[xglyph.text_index])
+            if cached.night_mode and not InvertMarkupColors.get() and glyph_color then
+                glyph_color = glyph_color:invert()
+            end
+
             bb:colorblitFromRGB32(
                 glyph.bb,
                 x + pen_x + glyph.l + xglyph.x_offset,
                 y + baseline - glyph.t - xglyph.y_offset,
                 0, 0,
                 glyph.bb:getWidth(), glyph.bb:getHeight(),
-                self.fgcolor)
+                glyph_color or self.fgcolor)
             pen_x = pen_x + xglyph.x_advance -- use Harfbuzz advance
         end
     end

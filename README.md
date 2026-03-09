@@ -33,6 +33,13 @@ Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/Intro
 ### [🞂 2-ui-font-color.lua](2-ui-font-color.lua)
 This patch adds the ability to change the RGB color of the UI font.
 
+It also adds inline markup color support in UI text with the following syntax:
+
+> **§color** text **§r**
+
+The color can be addressed by either name (white) or RGB hex (#ffffff or #fff).
+This can be useful for when you want parts of text or icons to be a certain color (such as in a titlebar patch).
+
 It can be configured under **🞂 UI font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
 Besides the color, it has options for:
@@ -42,6 +49,7 @@ Besides the color, it has options for:
 - A toggle for the dictionary text.
 - A toggle to change the page font color. (epub, html, fb2, txt...)
 - A toggle to change the color only in the reader.
+- A toggle to invert inline markup colors in night mode.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 
