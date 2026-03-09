@@ -605,23 +605,31 @@ end
 local original_TextWidget_updateSize = TextWidget.updateSize
 function TextWidget:updateSize()
     if hasColorMarkers(self.text) then
-        if not self._color_segments then
-            self._color_segments = parseColorSegments(self.text, self.fgcolor)
+        if MarkupColors.get() then
+            if not self._color_segments then
+                self._color_segments = parseColorSegments(self.text, self.fgcolor)
 
-            -- Cache cluster_colors
-            self._cluster_colors = {}
-            local char_index = 1
-            for _, seg in ipairs(self._color_segments) do
-                for _ in seg.text:gmatch(".[\128-\191]*") do
-                    self._cluster_colors[char_index] = seg.color
-                    char_index = char_index + 1
+                -- Cache cluster_colors
+                self._cluster_colors = {}
+                local char_index = 1
+                for _, seg in ipairs(self._color_segments) do
+                    for _ in seg.text:gmatch(".[\128-\191]*") do
+                        self._cluster_colors[char_index] = seg.color
+                        char_index = char_index + 1
+                    end
                 end
             end
-        end
-        if not self._text_unstripped then
-            self._text_unstripped = self.text
-            self.text = stripColorMarkers(self.text)
-            self._updated = nil -- force recompute with stripped text
+            if not self._text_unstripped then
+                self._text_unstripped = self.text
+                self.text = stripColorMarkers(self.text)
+                self._updated = nil -- force recompute with stripped text
+            end
+        else
+            if not self._text_unstripped then
+                self._text_unstripped = self.text
+                self.text = stripColorMarkers(self.text)
+                self._updated = nil -- force recompute with stripped text
+            end
         end
     end
     original_TextWidget_updateSize(self)
@@ -717,7 +725,7 @@ function TextWidget:paintTo(bb, x, y)
 
             -- Markup color for glyph (can be nil if falling back to fgcolor)
             local glyph_color = has_markers and
-            (self._cluster_colors and self._cluster_colors[run_offset + xglyph.text_index])
+                (self._cluster_colors and self._cluster_colors[run_offset + xglyph.text_index])
             if cached.night_mode and not InvertMarkupColors.get() and glyph_color then
                 glyph_color = glyph_color:invert()
             end
