@@ -8,6 +8,7 @@
         - A toggle for affecting the dictionary text.
         - A toggle for changing the page font color (epub, html, fb2, txt...).
         - A toggle to change the color only in the reader.
+        - A toggle for markup colors.
         - A toggle to invert markup colors in night mode.
     Optionally, the color can be set with a color picker.
 --]]
@@ -43,6 +44,7 @@ local TextBoxFontColor = Setting("ui_font_color_textbox", true)            -- Wh
 local DictionaryFontColor = Setting("ui_font_color_dict", true)            -- Whether the font color of the dictionary should be changed (default: true)
 local PageFontColor = Setting("ui_font_color_reader_page", false)          -- Whether the font color of the page should be changed (default: false)
 local ReaderOnlyFontColor = Setting("ui_font_color_reader_only", false)    -- Whether the font color should be changed in the reader only (default: false)
+local MarkupColors = Setting("ui_font_color_markup", true)                 -- Whether the markup colors should be enabled (default: true)
 local InvertMarkupColors = Setting("ui_font_color_inverted_markup", false) -- Whether the markup colors should be inverted in night mode (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
@@ -413,6 +415,14 @@ local function font_color_menu()
             })
 
             table.insert(items, {
+                text = _("Enable markup colors"),
+                checked_func = MarkupColors.get,
+                callback = function()
+                    MarkupColors.toggle()
+                end,
+            })
+
+            table.insert(items, {
                 text = _("Invert markup colors in night mode"),
                 checked_func = InvertMarkupColors.get,
                 callback = function()
@@ -656,7 +666,7 @@ function TextWidget:paintTo(bb, x, y)
             return
         end
 
-        local has_markers = self._color_segments ~= nil
+        local has_markers = MarkupColors.get() and self._color_segments ~= nil
 
         if not self.use_xtext then
             if has_markers then
@@ -706,7 +716,8 @@ function TextWidget:paintTo(bb, x, y)
             local glyph = RenderText:getGlyphByIndex(face, xglyph.glyph, self.bold)
 
             -- Markup color for glyph (can be nil if falling back to fgcolor)
-            local glyph_color = (self._cluster_colors and self._cluster_colors[run_offset + xglyph.text_index])
+            local glyph_color = has_markers and
+            (self._cluster_colors and self._cluster_colors[run_offset + xglyph.text_index])
             if cached.night_mode and not InvertMarkupColors.get() and glyph_color then
                 glyph_color = glyph_color:invert()
             end

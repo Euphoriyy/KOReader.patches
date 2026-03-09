@@ -49,6 +49,7 @@ Besides the color, it has options for:
 - A toggle for the dictionary text.
 - A toggle to change the page font color. (epub, html, fb2, txt...)
 - A toggle to change the color only in the reader.
+- A toggle for markup colors.
 - A toggle to invert inline markup colors in night mode.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
