@@ -1,5 +1,12 @@
 --[[
-    This user patch turns off the frontlight during refreshes in night mode to prevent bright flashes.
+    This user patch dims the frontlight during refreshes in night mode to prevent bright flashes.
+    It has the following menu options:
+        - A toggle to enable dimming.
+        - A toggle to force dimming every page turn/refresh.
+        - A toggle for dimming on UI refreshes.
+        - A toggle for dimming in the reader only.
+        - A toggle to dim relative to the current brightness.
+        - A numeric stepper for the level of dimming (absolute/relative).
 --]]
 
 local Device = require("device")
@@ -166,10 +173,10 @@ local original_filemanagermenu_setUpdateItemTable = FileManagerMenu.setUpdateIte
 
 local function set_menu(self, menu_items)
     menu_items.frontlight_refresh = {
-        text = _("Frontlight refresh"),
+        text = _("Dim frontlight on refreshes"),
         sub_item_table = {
             {
-                text = _("Enable turning off frontlight on refresh"),
+                text = _("Enable dimming on refreshes"),
                 checked_func = EnableFrontlightRefresh.get,
                 callback = function()
                     EnableFrontlightRefresh.toggle()
@@ -177,7 +184,7 @@ local function set_menu(self, menu_items)
                 end,
             },
             {
-                text = _("Force frontlight off every page turn"),
+                text = _("Force dim every page turn"),
                 checked_func = ForceFrontlightRefresh.get,
                 enabled_func = EnableFrontlightRefresh.get,
                 callback = function()
@@ -186,7 +193,7 @@ local function set_menu(self, menu_items)
                 end,
             },
             {
-                text = _("Turn off frontlight on UI refreshes"),
+                text = _("Dim on UI refreshes"),
                 checked_func = UIFrontlightRefresh.get,
                 enabled_func = EnableFrontlightRefresh.get,
                 callback = function()
@@ -195,7 +202,7 @@ local function set_menu(self, menu_items)
                 end,
             },
             {
-                text = _("Turn off frontlight in reader only"),
+                text = _("Dim in reader only"),
                 checked_func = ReaderOnlyFrontlightRefresh.get,
                 enabled_func = EnableFrontlightRefresh.get,
                 callback = function()
