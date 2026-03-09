@@ -77,6 +77,11 @@ Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing 
 <img src="img/ui-background-color-2.png" style="width:80%; height:auto;">
 
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
+
+> [!WARNING]
+> This patch is now obsolete as of the newest nightly (v2025.10-182+) with koreader/koreader#14954.
+> It should be removed when updating to the nightly or new releases.
+
 This patch adds a document option to invert CBZs/PDFs in night mode.
 It is useful for reading comics/manga in night mode.
 
