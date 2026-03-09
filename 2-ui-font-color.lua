@@ -150,7 +150,6 @@ end
 
 -- Cache
 local cached = {
-    night_mode = G_reader_settings:isTrue("night_mode"),
     alt_night_color = AltNightFontColor.get(),
     invert_in_night_mode = InvertFontColor.get(),
     set_textbox_color = TextBoxFontColor.get(),
@@ -166,8 +165,8 @@ local cached = {
 -- Recompute and cache the final fgcolor based on current settings
 -- Applies night mode inversion if enabled, and updates cached.fgcolor only if it has changed
 local function recomputeFGColor()
-    local hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
-    if cached.night_mode then
+    local hex = (Screen.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
+    if Screen.night_mode then
         if cached.alt_night_color or not cached.invert_in_night_mode then
             hex = invertColor(hex)
         end
@@ -188,7 +187,7 @@ local function refreshFileManager()
 end
 
 local function getFontColor()
-    if cached.night_mode and cached.alt_night_color then
+    if Screen.night_mode and cached.alt_night_color then
         return NightHexFontColor.get()
     else
         return HexFontColor.get()
@@ -196,7 +195,7 @@ local function getFontColor()
 end
 
 local function setFontColor(hex)
-    if cached.night_mode and cached.alt_night_color then
+    if Screen.night_mode and cached.alt_night_color then
         NightHexFontColor.set(hex)
         cached.night_hex = hex
     else
@@ -328,7 +327,7 @@ local function font_color_menu()
                     AltNightFontColor.toggle()
                     cached.alt_night_color = AltNightFontColor.get()
 
-                    if cached.night_mode then
+                    if Screen.night_mode then
                         recomputeFGColor()
 
                         if cached.set_textbox_color then
@@ -351,7 +350,7 @@ local function font_color_menu()
                     cached.invert_in_night_mode = InvertFontColor.get()
                     recomputeFGColor()
 
-                    if cached.night_mode then
+                    if Screen.night_mode then
                         if cached.set_textbox_color then
                             refreshFileManager()
                         end
@@ -458,7 +457,6 @@ local original_UIManager_ToggleNightMode = UIManager.ToggleNightMode
 function UIManager:ToggleNightMode()
     original_UIManager_ToggleNightMode(self)
 
-    cached.night_mode = not cached.night_mode
     recomputeFGColor()
 
     if cached.alt_night_color or not cached.invert_in_night_mode then
@@ -478,8 +476,7 @@ local original_UIManager_SetNightMode = UIManager.SetNightMode
 function UIManager:SetNightMode(night_mode)
     original_UIManager_SetNightMode(self)
 
-    if cached.night_mode ~= night_mode then
-        cached.night_mode = night_mode
+    if Screen.night_mode ~= night_mode then
         recomputeFGColor()
 
         if cached.alt_night_color or not cached.invert_in_night_mode then
@@ -725,7 +722,7 @@ function TextWidget:paintTo(bb, x, y)
             -- Markup color for glyph (can be nil if falling back to fgcolor)
             local glyph_color = has_markers and
                 (self._cluster_colors and self._cluster_colors[run_offset + xglyph.text_index])
-            if cached.night_mode and not InvertMarkupColors.get() and glyph_color then
+            if Screen.night_mode and not InvertMarkupColors.get() and glyph_color then
                 glyph_color = glyph_color:invert()
             end
 
@@ -765,8 +762,8 @@ function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
     if cached.set_dictionary_color and not (cached.reader_only and not has_document_open()) then
-        local fg_hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
-        if cached.night_mode then
+        local fg_hex = (Screen.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
+        if Screen.night_mode then
             if cached.alt_night_color or not cached.invert_in_night_mode then
                 fg_hex = invertColor(fg_hex)
             end
@@ -790,8 +787,8 @@ function ReaderStyleTweak:getCssText()
     local original_css = original_ReaderStyleTweak_getCssText(self)
 
     if cached.set_page_color then
-        local fg_hex = (cached.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
-        if cached.night_mode then
+        local fg_hex = (Screen.night_mode and cached.alt_night_color) and cached.night_hex or cached.hex
+        if Screen.night_mode then
             if cached.alt_night_color or not cached.invert_in_night_mode then
                 fg_hex = invertColor(fg_hex)
             end

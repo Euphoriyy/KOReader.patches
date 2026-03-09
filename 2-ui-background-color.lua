@@ -184,7 +184,6 @@ local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
 
 -- Cache
 local bg_cached = {
-    night_mode = G_reader_settings:isTrue("night_mode"),
     alt_night_color = AltNightBackgroundColor.get(),
     invert_in_night_mode = InvertBackgroundColor.get(),
     set_textbox_color = TextBoxBackgroundColor.get(),
@@ -199,8 +198,8 @@ local bg_cached = {
 -- Recompute and cache the final colors based on current settings
 -- Applies night mode inversion if enabled, and updates bg_cached.bgcolor only if it has changed
 local function recomputeColors()
-    local hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
-    if bg_cached.night_mode then
+    local hex = (Screen.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+    if Screen.night_mode then
         if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
             hex = invertColor(hex)
         end
@@ -238,7 +237,7 @@ function ReaderFooter:onRefreshFooterBackground()
 end
 
 local function getBackgroundColor()
-    if bg_cached.night_mode and bg_cached.alt_night_color then
+    if Screen.night_mode and bg_cached.alt_night_color then
         return NightHexBackgroundColor.get()
     else
         return HexBackgroundColor.get()
@@ -246,7 +245,7 @@ local function getBackgroundColor()
 end
 
 local function setBackgroundColor(hex)
-    if bg_cached.night_mode and bg_cached.alt_night_color then
+    if Screen.night_mode and bg_cached.alt_night_color then
         NightHexBackgroundColor.set(hex)
         bg_cached.night_hex = hex
     else
@@ -379,7 +378,7 @@ local function background_color_menu()
                     AltNightBackgroundColor.toggle()
                     bg_cached.alt_night_color = AltNightBackgroundColor.get()
 
-                    if bg_cached.night_mode then
+                    if Screen.night_mode then
                         recomputeColors()
 
                         reloadIcons()
@@ -405,7 +404,7 @@ local function background_color_menu()
                     recomputeColors()
 
 
-                    if bg_cached.night_mode then
+                    if Screen.night_mode then
                         reloadIcons()
 
                         if bg_cached.set_textbox_color then
@@ -822,7 +821,7 @@ function IconWidget:onToggleNightMode()
 end
 
 function IconWidget:onSetNightMode(night_mode)
-    if bg_cached.night_mode ~= night_mode and (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
+    if Screen.night_mode ~= night_mode and (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
         self:free()
         self:init()
     end
@@ -834,7 +833,6 @@ local original_UIManager_ToggleNightMode = UIManager.ToggleNightMode
 function UIManager:ToggleNightMode()
     original_UIManager_ToggleNightMode(self)
 
-    bg_cached.night_mode = not bg_cached.night_mode
     recomputeColors()
 
     if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
@@ -856,8 +854,7 @@ local original_UIManager_SetNightMode = UIManager.SetNightMode
 function UIManager:SetNightMode(night_mode)
     original_UIManager_SetNightMode(self)
 
-    if bg_cached.night_mode ~= night_mode then
-        bg_cached.night_mode = night_mode
+    if Screen.night_mode ~= night_mode then
         recomputeColors()
 
         if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
@@ -991,8 +988,8 @@ local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDic
 function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
-    local bg_hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
-    if bg_cached.night_mode then
+    local bg_hex = (Screen.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+    if Screen.night_mode then
         if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
             bg_hex = invertColor(bg_hex)
         end
@@ -1015,7 +1012,7 @@ function ToggleSwitch:update()
         local row = self.toggle_content[i]
         for j = 1, #row do
             local cell = row[j]
-            if not bg_cached.night_mode then
+            if not Screen.night_mode then
                 if pos == (i - 1) * self.n_pos + j then
                     cell.color = self.fgcolor
                     cell.original_background = self.fgcolor
@@ -1069,8 +1066,8 @@ function ReaderStyleTweak:getCssText()
     local original_css = original_ReaderStyleTweak_getCssText(self)
 
     if bg_cached.set_page_color then
-        local bg_hex = (bg_cached.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
-        if bg_cached.night_mode then
+        local bg_hex = (Screen.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+        if Screen.night_mode then
             if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
                 bg_hex = invertColor(bg_hex)
             end
@@ -1137,7 +1134,7 @@ userpatch.registerPatchPluginFunc("statistics", function()
                         local span_w = overlaps[span_index][1]
                         span_index = span_index + 1
 
-                        if bg_cached.night_mode and
+                        if Screen.night_mode and
                             (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
                             span_w.original_background = span_w.background:invert()
                         else
@@ -1161,7 +1158,7 @@ userpatch.registerPatchPluginFunc("statistics", function()
     function CalendarDayView:generateSpan(start, finish, bgcolor, fgcolor, title)
         local span = original_CalendarDayView_generateSpan(self, start, finish, bgcolor, fgcolor, title)
         if span then
-            if bg_cached.night_mode and
+            if Screen.night_mode and
                 (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
                 span.original_background = span.background:invert()
             else
@@ -1190,7 +1187,7 @@ userpatch.registerPatchPluginFunc("statistics", function()
         local span = overlap_group and overlap_group[1]
 
         if span then
-            if bg_cached.night_mode and
+            if Screen.night_mode and
                 (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
                 span.original_background = span.background:invert()
             else

@@ -88,11 +88,6 @@ local function unread_inverted_enabled()
     return G_reader_settings:isTrue("progress_bar_color_unread_inverted", true)
 end
 
--- Helper: detect night mode
-local function is_night_mode()
-    return G_reader_settings:isTrue("night_mode")
-end
-
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
     -- Remove the "#" and parse as R, G, B
@@ -174,7 +169,7 @@ function ReaderFooter:onToggleNightMode()
     local readColor = Settings:getPersistent(thin, read)
     local unreadColor = Settings:getPersistent(thin, unread)
 
-    if not is_night_mode() then
+    if not Screen.night_mode then
         if not read_inverted_enabled() then
             readColor = invertColor(readColor)
         end
@@ -233,7 +228,7 @@ function ProgressWidget:_setColors(thin)
         Settings:setPersistent(thin, unread, unreadColor)
     end
 
-    if is_night_mode() then
+    if Screen.night_mode then
         if not read_inverted_enabled() then
             readColor = invertColor(readColor)
         end
@@ -327,7 +322,7 @@ function ReaderFooter:_statusBarColorMenu(read)
 
                                     -- Process color depending on if the color should be inverted in night mode
                                     local display_text = text
-                                    if is_night_mode() then
+                                    if Screen.night_mode then
                                         if not inverted_enabled then
                                             display_text = invertColor(text)
                                         end
@@ -338,7 +333,8 @@ function ReaderFooter:_statusBarColorMenu(read)
                                         return
                                     end
 
-                                    Settings:setPersistent(self.settings.progress_style_thin, color_attrib, string.upper(text))
+                                    Settings:setPersistent(self.settings.progress_style_thin, color_attrib,
+                                        string.upper(text))
                                     self.progress_bar[color_attrib] = color
                                     touchmenu_instance:updateItems()
                                     self:refreshFooter(true)
@@ -372,7 +368,7 @@ function ReaderFooter:_statusBarColorMenu(read)
                     if new_hex ~= current_hex then
                         -- Process color depending on if the color should be inverted in night mode
                         local display_hex = new_hex
-                        if is_night_mode() then
+                        if Screen.night_mode then
                             if not inverted_enabled then
                                 display_hex = invertColor(new_hex)
                             end

@@ -12,6 +12,7 @@
 local Device = require("device")
 local Dispatcher = require("dispatcher")
 local ReaderUI = require("apps/reader/readerui")
+local Screen = Device.screen
 local Screensaver = require("ui/screensaver")
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
 local UIManager = require("ui/uimanager")
@@ -48,11 +49,6 @@ local rel_dim = {
 local patch_active = true
 local restoring = false
 local dimmed = false
-
--- Helper: detect night mode
-local function is_night_mode()
-    return G_reader_settings:isTrue("night_mode")
-end
 
 -- Helper: check if we have a document open
 local function has_document_open()
@@ -120,7 +116,7 @@ local original_refresh = UIManager._refresh
 
 function UIManager._refresh(self, refresh_mode, region, dither)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
-    if not EnableFrontlightRefresh.get() or restoring or not patch_active or not is_night_mode() or
+    if not EnableFrontlightRefresh.get() or restoring or not patch_active or not Screen.night_mode or
         (ReaderOnlyFrontlightRefresh.get() and not has_document_open()) or
         not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
     then
