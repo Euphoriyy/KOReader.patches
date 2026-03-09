@@ -576,7 +576,7 @@ local function stripColorMarkers(text)
     return text
 end
 
--- Replace setText method so that it recomputes the colored text on changes
+-- Replace setText method so that it resets and recomputes the colored text on changes
 function TextWidget:setText(text)
     if text == self.text then
         return
@@ -584,6 +584,7 @@ function TextWidget:setText(text)
 
     self._text_unstripped = nil
     self._color_segments = nil
+    self._cluster_colors = nil
     self._updated = nil
 
     self.text = text
@@ -596,6 +597,16 @@ function TextWidget:updateSize()
     if hasColorMarkers(self.text) then
         if not self._color_segments then
             self._color_segments = parseColorSegments(self.text, self.fgcolor)
+
+            -- Cache cluster_colors
+            self._cluster_colors = {}
+            local char_index = 1
+            for _, seg in ipairs(self._color_segments) do
+                for _ in seg.text:gmatch(".[\128-\191]*") do
+                    self._cluster_colors[char_index] = seg.color
+                    char_index = char_index + 1
+                end
+            end
         end
         if not self._text_unstripped then
             self._text_unstripped = self.text
@@ -651,10 +662,11 @@ function TextWidget:paintTo(bb, x, y)
             if has_markers then
                 local cursor_x = x
                 for _, seg in ipairs(self._color_segments) do
+                    local seg_color = seg.color or self.fgcolor
                     local seg_w = RenderText:sizeUtf8Text(cursor_x, bb:getWidth(), self.face, seg.text, true, self.bold)
                         .x
                     RenderText:renderUtf8Text(bb, cursor_x, y + self._baseline_h, self.face, seg.text,
-                        true, self.bold, seg.color, seg_w)
+                        true, self.bold, seg_color, seg_w)
                     cursor_x = cursor_x + seg_w
                 end
             else
@@ -676,31 +688,25 @@ function TextWidget:paintTo(bb, x, y)
             text_width = self.max_width
         end
 
-        -- Build byte offset → color map from stripped segments so it aligns
-        -- with what xtext/HarfBuzz shaped (which saw the stripped text)
-        local cluster_colors = nil
-        if has_markers then
-            cluster_colors = {}
-            local char_index = 1 -- text_index is 1-based
-            for _, seg in ipairs(self._color_segments) do
-                for uchar in seg.text:gmatch(".[\128-\191]*") do
-                    cluster_colors[char_index] = seg.color
-                    char_index = char_index + 1
-                end
-            end
-        end
-
         local pen_x = 0
         local baseline = self.forced_baseline or self._baseline_h
+        local run_offset = 0
+        local prev_text_index = 0
         for i, xglyph in ipairs(self._xshaping) do
             if pen_x >= text_width then
                 break
             end
+
+            if xglyph.text_index < prev_text_index then
+                run_offset = run_offset + prev_text_index
+            end
+            prev_text_index = xglyph.text_index
+
             local face = self.face.getFallbackFont(xglyph.font_num) -- callback (not a method)
             local glyph = RenderText:getGlyphByIndex(face, xglyph.glyph, self.bold)
 
             -- Markup color for glyph (can be nil if falling back to fgcolor)
-            local glyph_color = (cluster_colors and cluster_colors[xglyph.text_index])
+            local glyph_color = (self._cluster_colors and self._cluster_colors[run_offset + xglyph.text_index])
             if cached.night_mode and not InvertMarkupColors.get() and glyph_color then
                 glyph_color = glyph_color:invert()
             end
