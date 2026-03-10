@@ -245,6 +245,8 @@ local function getBackgroundColor()
 end
 
 local function setBackgroundColor(hex)
+    hex = string.upper(hex)
+
     if Screen.night_mode and bg_cached.alt_night_color then
         NightHexBackgroundColor.set(hex)
         bg_cached.night_hex = hex
@@ -302,7 +304,7 @@ local function set_color_menu()
                                         return
                                     end
 
-                                    setBackgroundColor(string.upper(text))
+                                    setBackgroundColor(text)
 
                                     touchmenu_instance:updateItems()
                                     UIManager:close(input_dialog)
@@ -974,8 +976,9 @@ local original_HtmlBoxWidget_render = HtmlBoxWidget._render
 function HtmlBoxWidget:_render()
     original_HtmlBoxWidget_render(self)
 
-    -- Check for non-white background color
-    if string.lower(bg_cached.hex) ~= "#ffffff" then
+    -- Check for non-B/W background color
+    local bg_hex = (Screen.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
+    if bg_hex ~= "#FFFFFF" and bg_hex ~= "#000000" then
         UIManager:setDirty(self.dialog or "all", function()
             return "flashui", self.dimen
         end)
