@@ -1048,37 +1048,28 @@ function DictQuickLookup:getHtmlDictionaryCss()
     return original_css .. custom_css
 end
 
--- Replace ToggleSwitch update method to use appropriate fgcolor
+-- Replace ToggleSwitch update method to use the appropriate colors
 function ToggleSwitch:update()
     self.fgcolor = bg_cached.fgcolor
+
+    self[1].original_background = bg_cached.bgcolor
+    self[1].background = EXCLUSION_COLOR
 
     local pos = self.position
     for i = 1, #self.toggle_content do
         local row = self.toggle_content[i]
         for j = 1, #row do
             local cell = row[j]
-            if not Screen.night_mode then
-                if pos == (i - 1) * self.n_pos + j then
-                    cell.color = self.fgcolor
-                    cell.original_background = self.fgcolor
-                    cell.background = EXCLUSION_COLOR
-                    cell[1][1].fgcolor = Blitbuffer.COLOR_WHITE
-                else
-                    cell.color = self.bgcolor
-                    cell.background = self.bgcolor
-                    cell[1][1].fgcolor = Blitbuffer.COLOR_BLACK
-                end
+            if pos == (i - 1) * self.n_pos + j then
+                cell.color = self.fgcolor
+                cell.original_background = self.fgcolor
+                cell.background = EXCLUSION_COLOR
+                cell[1][1].fgcolor = Blitbuffer.COLOR_WHITE
             else
-                if pos == (i - 1) * self.n_pos + j then
-                    cell.color = self.bgcolor
-                    cell.background = self.bgcolor
-                    cell[1][1].fgcolor = Blitbuffer.COLOR_BLACK
-                else
-                    cell.color = self.fgcolor
-                    cell.original_background = self.fgcolor
-                    cell.background = EXCLUSION_COLOR
-                    cell[1][1].fgcolor = Blitbuffer.COLOR_WHITE
-                end
+                cell.color = self.bgcolor
+                cell.background = self.bgcolor
+                cell[1][1].fgcolor = Blitbuffer.COLOR_BLACK
+                cell.bordersize = 0
             end
         end
     end

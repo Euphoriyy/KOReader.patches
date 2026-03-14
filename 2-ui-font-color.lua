@@ -23,6 +23,7 @@ local RenderText = require("ui/rendertext")
 local Screen = require("device").screen
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
+local ToggleSwitch = require("ui/widget/toggleswitch")
 local UIManager = require("ui/uimanager")
 local bit = require("bit")
 local util = require("util")
@@ -847,3 +848,29 @@ function ReaderStyleTweak:getCssText()
         return original_css
     end
 end
+
+-- Hook into ToggleSwitch updates and fix the font color
+-- Run late after the background color patch
+UIManager:scheduleIn(1, function()
+    local original_ToggleSwitch_update = ToggleSwitch.update
+
+    function ToggleSwitch:update()
+        original_ToggleSwitch_update(self)
+
+        local pos = self.position
+        for i = 1, #self.toggle_content do
+            local row = self.toggle_content[i]
+            for j = 1, #row do
+                local cell = row[j]
+                if pos == (i - 1) * self.n_pos + j then
+                    cell[1][1].original_fgcolor = Screen.night_mode and Blitbuffer.COLOR_BLACK
+                        or Blitbuffer.COLOR_WHITE
+                    cell[1][1].fgcolor = EXCLUSION_COLOR
+                else
+                    cell[1][1].original_fgcolor = cached.fgcolor
+                    cell[1][1].fgcolor = EXCLUSION_COLOR
+                end
+            end
+        end
+    end
+end)
