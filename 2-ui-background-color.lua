@@ -1050,7 +1050,7 @@ end
 
 -- Replace ToggleSwitch update method to use the appropriate colors
 function ToggleSwitch:update()
-    self.fgcolor = bg_cached.fgcolor
+    self.fgcolor = bg_cached.bgcolor:invert()
 
     self[1].original_background = bg_cached.bgcolor
     self[1].background = EXCLUSION_COLOR
