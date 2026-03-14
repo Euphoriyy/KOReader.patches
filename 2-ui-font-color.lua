@@ -863,10 +863,7 @@ UIManager:scheduleIn(1, function()
             for j = 1, #row do
                 local cell = row[j]
                 if pos == (i - 1) * self.n_pos + j then
-                    cell[1][1].original_fgcolor = self.fgcolor:invert()
-                    cell[1][1].fgcolor = EXCLUSION_COLOR
-                else
-                    cell[1][1].original_fgcolor = cached.fgcolor
+                    cell[1][1].original_fgcolor = cell[1][1].fgcolor
                     cell[1][1].fgcolor = EXCLUSION_COLOR
                 end
             end

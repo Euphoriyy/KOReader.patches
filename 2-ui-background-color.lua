@@ -1064,7 +1064,7 @@ function ToggleSwitch:update()
                 cell.color = self.fgcolor
                 cell.original_background = self.fgcolor
                 cell.background = EXCLUSION_COLOR
-                cell[1][1].fgcolor = Blitbuffer.COLOR_WHITE
+                cell[1][1].fgcolor = bg_cached.bgcolor
             else
                 cell.color = self.bgcolor
                 cell.background = self.bgcolor
