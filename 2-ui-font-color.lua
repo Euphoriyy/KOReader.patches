@@ -115,12 +115,6 @@ local function hexToHSV(hex)
     return h, s, v
 end
 
--- Helper: check if two colors are equal
-local function colorEquals(c1, c2)
-    if not c1 or not c2 then return false end
-    return c1:getColorRGB32() == c2:getColorRGB32()
-end
-
 -- Helper: compute luminance of a color (0 = black, 1 = white)
 local function luminance(color)
     return 0.299 * color:getR() + 0.587 * color:getG() + 0.114 * color:getB()
@@ -692,7 +686,7 @@ function TextWidget:paintTo(bb, x, y)
 
     if is_excluded(original_fgcolor) then
         self.fgcolor = self.original_fgcolor or Blitbuffer.COLOR_BLACK
-    elseif colorEquals(original_fgcolor, Blitbuffer.COLOR_DARK_GRAY) then
+    elseif original_fgcolor == Blitbuffer.COLOR_DARK_GRAY then
         -- If the original color was dark gray, then place a lighter color
         self.fgcolor = lightenColor(cached.fgcolor, 0.5)
 

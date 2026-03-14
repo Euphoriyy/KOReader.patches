@@ -127,12 +127,6 @@ local function hexToHSV(hex)
     return h, s, v
 end
 
--- Helper: check if two colors are equal
-local function colorEquals(c1, c2)
-    if not c1 or not c2 then return false end
-    return c1:getColorRGB32() == c2:getColorRGB32()
-end
-
 -- Helper: compute luminance of a color (0 = black, 1 = white)
 local function luminance(color)
     return 0.299 * color:getR() + 0.587 * color:getG() + 0.114 * color:getB()
@@ -945,7 +939,7 @@ function UnderlineContainer:paintTo(bb, x, y)
     self[1]:paintTo(bb, x, p_y)
 
     -- Only paint underline if its color is NOT white
-    if not colorEquals(self.color, Blitbuffer.COLOR_WHITE) then
+    if self.color ~= Blitbuffer.COLOR_WHITE then
         bb:paintRect(line_x, y + container_size.h - self.linesize,
             line_width, self.linesize, self.color)
     end
@@ -966,10 +960,8 @@ function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
     self.bgcolor = original_bgcolor
 end
 
--- Hook into LineWidget painting
+-- Add background color and color painting to LineWidget painting method
 -- Responsible for separators between icons and document option tabs
-local original_LineWidget_paintTo = LineWidget.paintTo
-
 function LineWidget:paintTo(bb, x, y)
     local original_background = self.background
 
@@ -979,7 +971,26 @@ function LineWidget:paintTo(bb, x, y)
         self.background = bg_cached.bgcolor:invert()
     end
 
-    original_LineWidget_paintTo(self, bb, x, y)
+    if self.style == "none" then return end
+    if self.style == "dashed" then
+        for i = 0, self.dimen.w - 20, 20 do
+            bb:paintRectRGB32(x + i, y,
+                16, self.dimen.h, self.background)
+        end
+    else
+        if self.empty_segments then
+            bb:paintRectRGB32(x, y,
+                self.empty_segments[1].s,
+                self.dimen.h,
+                self.background)
+            bb:paintRectRGB32(x + self.empty_segments[1].e, y,
+                self.dimen.w - x - self.empty_segments[1].e,
+                self.dimen.h,
+                self.background)
+        else
+            bb:paintRectRGB32(x, y, self.dimen.w, self.dimen.h, self.background)
+        end
+    end
 
     self.background = original_background
 end
