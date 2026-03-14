@@ -370,6 +370,7 @@ local function font_color_menu()
                         end
                     end
                 end,
+                separator = true,
             })
 
             table.insert(items, {
@@ -421,6 +422,7 @@ local function font_color_menu()
                         UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
                     end
                 end,
+                separator = true,
             })
 
             table.insert(items, {

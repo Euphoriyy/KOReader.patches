@@ -428,6 +428,7 @@ local function background_color_menu()
                         end
                     end
                 end,
+                separator = true,
             })
 
             table.insert(items, {
