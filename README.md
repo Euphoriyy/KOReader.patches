@@ -109,31 +109,42 @@ This patch adds a customizable badge that displays the percentage read for each 
 It has inline option variables at the start of the file.
 
 In comparison to the original, it adds two new additional features:
-- The ability to not be inverted in night mode when used together with the [UI background color patch](https://github.com/Euphoriyy/KOReader.patches#-2-ui-background-colorlua).
-- The inline option to exclude the text color from being modified by the [UI font color patch](https://github.com/Euphoriyy/KOReader.patches#-2-ui-font-colorlua).
+- The ability to not be inverted in night mode when used together with the [UI background color patch](#-2-ui-background-colorlua).
+- The inline option to exclude the text color from being modified by the [UI font color patch](#-2-ui-font-colorlua).
 
 Edited from [the version by angelsangita](https://github.com/angelsangita/Koreader-Patches?tab=readme-ov-file#-2-percent-badge).
 
 ### [🞂 2-rounded-covers.lua](2-rounded-covers.lua)
 This patch adds rounded corners to the book covers in the file browser.
 
-The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [UI background color patch](https://github.com/Euphoriyy/KOReader.patches#-2-ui-background-colorlua).
+The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [UI background color patch](#-2-ui-background-colorlua).
 
 Based on the [original patch by SeriousHornet](https://github.com/SeriousHornet/KOReader.patches?tab=readme-ov-file#-2--rounded-coverslua).
 
 ### [🞂 2-rounded-folder-covers.lua](2-rounded-folder-covers.lua)
 This patch adds rounded corners to the folder covers in the file browser.
 
-The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [UI background color patch](https://github.com/Euphoriyy/KOReader.patches#-2-ui-background-colorlua).
+The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [UI background color patch](#-2-ui-background-colorlua).
 
 Based on the [original patch by SeriousHornet](https://github.com/SeriousHornet/KOReader.patches?tab=readme-ov-file#-2-rounded-folder-coverslua).
+
+### [🞂 2-custom-widgets.lua](2-custom-widgets.lua)
+This patch adds support for custom widgets that can be used by other patches and plugins.
+
+Widgets are auto-loaded from: `<koreader_dir>/widgets/`
+
+Each .lua file in that directory is loaded and registered under its
+filename (without the .lua extension). For example:
+    widgets/colorwheelwidget.lua  →  "colorwheelwidget"
+
+Information on how to use it in patches/plugins can be found in the patch comments.
 
 ## Widgets
 
 Widgets allow for additional functionality for patches. Developers use them to provide unique ways to configure options.
 
 ### *How do I install widgets?*
-You can install widgets by downloading the file and placing it in `koreader/frontend/ui/widget`.
+You can install widgets by using the [custom widgets patch](#-2-custom-widgetslua). After installing that patch, you have to create a custom `widgets` folder (just like the `patches` folder) inside of the `koreader directory`. Any widgets can now be placed inside this new `widgets` folder.
 
 ### [🞂 colorwheelwidget.lua](widgets/colorwheelwidget.lua)
 

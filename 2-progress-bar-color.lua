@@ -277,7 +277,12 @@ local function getMenuItem(menu, ...) -- path
     return item
 end
 
-local has_ColorWheelWidget, ColorWheelWidget = pcall(require, "ui/widget/colorwheelwidget")
+local has_CustomWidgets, CustomWidgets = pcall(require, "custom_widgets")
+local ColorWheelWidget = false
+
+if has_CustomWidgets then
+    ColorWheelWidget = CustomWidgets.get("colorwheelwidget")
+end
 
 function ReaderFooter:_statusBarColorMenu(read)
     InputDialog = require("ui/widget/inputdialog")
@@ -286,7 +291,7 @@ function ReaderFooter:_statusBarColorMenu(read)
         text_func = function()
             local color = Settings:getPersistent(self.settings.progress_style_thin, color_attrib)
             local format = read and "Read color: %1" or "Unread color: %1"
-            if has_ColorWheelWidget then
+            if ColorWheelWidget then
                 return T(format .. " (hold to pick)", color)
             end
             return T(format, color)
@@ -349,7 +354,7 @@ function ReaderFooter:_statusBarColorMenu(read)
             input_dialog:onShowKeyboard()
         end,
         hold_callback = function(touchmenu_instance)
-            if not has_ColorWheelWidget then
+            if not ColorWheelWidget then
                 return
             end
 

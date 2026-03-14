@@ -283,7 +283,12 @@ local ReaderMenu = require("apps/reader/modules/readermenu")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
-local has_ColorWheelWidget, ColorWheelWidget = pcall(require, "ui/widget/colorwheelwidget")
+local has_CustomWidgets, CustomWidgets = pcall(require, "custom_widgets")
+local ColorWheelWidget = false
+
+if has_CustomWidgets then
+    ColorWheelWidget = CustomWidgets.get("colorwheelwidget")
+end
 
 local function set_color_menu()
     InputDialog = require("ui/widget/inputdialog")
@@ -327,7 +332,7 @@ local function set_color_menu()
             UIManager:show(input_dialog)
             input_dialog:onShowKeyboard()
         end,
-        separator = not has_ColorWheelWidget,
+        separator = not ColorWheelWidget,
     }
 end
 
@@ -379,7 +384,7 @@ local function background_color_menu()
             }
 
             -- Add color picking menu if color wheel widget is present
-            if has_ColorWheelWidget then
+            if ColorWheelWidget then
                 table.insert(items, pick_color_menu())
             end
 
