@@ -119,8 +119,6 @@ local Folder = {
     },
 }
 
-local clipCorner
-
 local function clipRoundedRect(bb, x, y, w, h, r, color)
     if r <= 0 then return end
     if 2 * r > w then r = math.floor(w / 2) end
@@ -129,7 +127,7 @@ local function clipRoundedRect(bb, x, y, w, h, r, color)
     local r2 = r * r
 
     -- Helper: clip one corner
-    clipCorner = clipCorner or function(cx, cy, start_x, end_x, start_y, end_y)
+    local function clipCorner(cx, cy, start_x, end_x, start_y, end_y)
         for px = start_x, end_x do
             for py = start_y, end_y do
                 local dx = px - cx
@@ -170,8 +168,6 @@ local function clipRoundedRect(bb, x, y, w, h, r, color)
     )
 end
 
-local drawCorner
-
 local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness)
     thickness = thickness or 1
     if r <= 0 then
@@ -191,7 +187,7 @@ local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness)
     local r2 = r * r
 
     -- Helper: draw one quarter circle
-    drawCorner = drawCorner or function(cx, cy, start_x, end_x, start_y, end_y)
+    local function drawCorner(cx, cy, start_x, end_x, start_y, end_y)
         for px = start_x, end_x do
             for py = start_y, end_y do
                 local dx = px - cx

@@ -12,8 +12,6 @@ local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
 local userpatch = require("userpatch")
 
-local clipCorner
-
 local function clipRoundedRect(bb, x, y, w, h, r, color)
     if r <= 0 then return end
     if 2 * r > w then r = math.floor(w / 2) end
@@ -22,7 +20,7 @@ local function clipRoundedRect(bb, x, y, w, h, r, color)
     local r2 = r * r
 
     -- Helper: clip one corner
-    clipCorner = clipCorner or function(cx, cy, start_x, end_x, start_y, end_y)
+    local function clipCorner(cx, cy, start_x, end_x, start_y, end_y)
         for px = start_x, end_x do
             for py = start_y, end_y do
                 local dx = px - cx
@@ -63,8 +61,6 @@ local function clipRoundedRect(bb, x, y, w, h, r, color)
     )
 end
 
-local drawCorner
-
 local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness)
     thickness = thickness or 1
     if r <= 0 then
@@ -72,25 +68,25 @@ local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness)
         bb:paintBorder(x, y, w, h, thickness, color, 0, false)
         return
     end
-    if 2*r > w then r = math.floor(w/2) end
-    if 2*r > h then r = math.floor(h/2) end
+    if 2 * r > w then r = math.floor(w / 2) end
+    if 2 * r > h then r = math.floor(h / 2) end
 
     -- Draw straight edges (top, bottom, left, right) leaving corners
-    bb:paintRect(x+r, y, w-2*r, thickness, color)            -- top
-    bb:paintRect(x+r, y+h-thickness, w-2*r, thickness, color) -- bottom
-    bb:paintRect(x, y+r, thickness, h-2*r, color)            -- left
-    bb:paintRect(x+w-thickness, y+r, thickness, h-2*r, color) -- right
+    bb:paintRect(x + r, y, w - 2 * r, thickness, color)       -- top
+    bb:paintRect(x + r, y + h - thickness, w - 2 * r, thickness, color) -- bottom
+    bb:paintRect(x, y + r, thickness, h - 2 * r, color)       -- left
+    bb:paintRect(x + w - thickness, y + r, thickness, h - 2 * r, color) -- right
 
-    local r2 = r*r
+    local r2 = r * r
 
     -- Helper: draw one quarter circle
-    drawCorner = drawCorner or function(cx, cy, start_x, end_x, start_y, end_y)
+    local function drawCorner(cx, cy, start_x, end_x, start_y, end_y)
         for px = start_x, end_x do
             for py = start_y, end_y do
                 local dx = px - cx
                 local dy = py - cy
-                local dist2 = dx*dx + dy*dy
-                if dist2 >= (r-thickness)^2 and dist2 <= r2 then
+                local dist2 = dx * dx + dy * dy
+                if dist2 >= (r - thickness) ^ 2 and dist2 <= r2 then
                     bb:setPixelClamped(px, py, color)
                 end
             end
@@ -98,13 +94,13 @@ local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness)
     end
 
     -- Top-left
-    drawCorner(x+r-1, y+r-1, x, x+r-1, y, y+r-1)
+    drawCorner(x + r - 1, y + r - 1, x, x + r - 1, y, y + r - 1)
     -- Top-right
-    drawCorner(x+w-r, y+r-1, x+w-r, x+w-1, y, y+r-1)
+    drawCorner(x + w - r, y + r - 1, x + w - r, x + w - 1, y, y + r - 1)
     -- Bottom-left
-    drawCorner(x+r-1, y+h-r, x, x+r-1, y+h-r, y+h-1)
+    drawCorner(x + r - 1, y + h - r, x, x + r - 1, y + h - r, y + h - 1)
     -- Bottom-right
-    drawCorner(x+w-r, y+h-r, x+w-r, x+w-1, y+h-r, y+h-1)
+    drawCorner(x + w - r, y + h - r, x + w - r, x + w - 1, y + h - r, y + h - 1)
 end
 
 local function patchBookCoverRoundedCorners(plugin)
