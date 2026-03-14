@@ -148,6 +148,14 @@ local function has_document_open()
     return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
 end
 
+-- Helper: check if a value exists in a table
+local function contains(tbl, val)
+    for _, v in ipairs(tbl) do
+        if v == val then return true end
+    end
+    return false
+end
+
 ------------------------------------------------------------
 -- ImageWidget specific code
 ------------------------------------------------------------
@@ -275,6 +283,8 @@ local ReaderMenu = require("apps/reader/modules/readermenu")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
+local has_ColorWheelWidget, ColorWheelWidget = pcall(require, "ui/widget/colorwheelwidget")
+
 local function set_color_menu()
     InputDialog = require("ui/widget/inputdialog")
     return {
@@ -317,10 +327,9 @@ local function set_color_menu()
             UIManager:show(input_dialog)
             input_dialog:onShowKeyboard()
         end,
+        separator = not has_ColorWheelWidget,
     }
 end
-
-local has_ColorWheelWidget, ColorWheelWidget = pcall(require, "ui/widget/colorwheelwidget")
 
 local function pick_color_menu()
     return {
@@ -350,13 +359,14 @@ local function pick_color_menu()
             })
             UIManager:show(wheel)
         end,
+        separator = true,
     }
 end
 
 local function background_color_menu()
     return {
         text_func = function()
-            return T(_("UI background color: %1"), getBackgroundColor())
+            return T(_("Background color: %1"), getBackgroundColor())
         end,
         sub_item_table_func = function()
             local items = {
@@ -462,21 +472,47 @@ local function background_color_menu()
     }
 end
 
-local function patch(menu, order)
-    table.insert(order.setting, "----------------------------")
-    table.insert(order.setting, "ui_background_color")
-    menu.menu_items.ui_background_color = background_color_menu()
+local function patch(menu, order, menu_entries)
+    -- Ensure the appearance entry exists in order.setting
+    if not contains(order.setting, "appearance") then
+        table.insert(order.setting, "----------------------------")
+        table.insert(order.setting, "appearance")
+    end
+
+    -- Ensure the appearance menu exists
+    if not menu.menu_items.appearance then
+        menu.menu_items.appearance = {
+            text = _("Appearance"),
+            sub_item_table = {},
+        }
+    end
+
+    -- Insert sub items
+    for _, value in pairs(menu_entries) do
+        table.insert(menu.menu_items.appearance.sub_item_table, value)
+    end
+
+    -- Sort sub items
+    table.sort(menu.menu_items.appearance.sub_item_table, function(a, b)
+        local a_text = type(a.text_func) == "function" and a.text_func() or a.text or ""
+        local b_text = type(b.text_func) == "function" and b.text_func() or b.text or ""
+        return a_text < b_text
+    end)
 end
 
 local original_FileManagerMenu_setUpdateItemTable = FileManagerMenu.setUpdateItemTable
 function FileManagerMenu:setUpdateItemTable()
-    patch(self, require("ui/elements/filemanager_menu_order"))
+    patch(self, require("ui/elements/filemanager_menu_order"), {
+        background_color = background_color_menu()
+    })
     original_FileManagerMenu_setUpdateItemTable(self)
 end
 
 local original_ReaderMenu_setUpdateItemTable = ReaderMenu.setUpdateItemTable
 function ReaderMenu:setUpdateItemTable()
-    patch(self, require("ui/elements/reader_menu_order"))
+    patch(self, require("ui/elements/reader_menu_order"), {
+        background_color = background_color_menu()
+    })
     original_ReaderMenu_setUpdateItemTable(self)
 end
 

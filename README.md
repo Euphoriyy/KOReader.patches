@@ -48,7 +48,7 @@ It also adds inline markup color support (disabled by default) to UI text with t
 The color can be addressed by either name (white) or RGB hex (#ffffff or #fff).
 This can be useful for when you want parts of text or icons to be a certain color (such as in a titlebar patch).
 
-It can be configured under **🞂 UI font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+It can be configured under **🞂 Appearance 🞂 Font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
 Besides the color, it has options for:
 - A toggle to use an alternative color in night mode.
@@ -69,7 +69,7 @@ This patch adds the ability to change the RGB color of the UI background.
 
 It is most recommended for non-e-ink devices for visiblity and refresh clarity, but it works fine on color e-ink (and B/W e-ink for selecting shades of gray). It is also best used together with [2-ui-font-color.lua](#-2-ui-font-colorlua) for best contrast.
 
-It can be configured under **🞂 UI background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+It can be configured under **🞂 Appearance 🞂 Background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
 Besides the color, it has options for:
 - A toggle to use an alternative color in night mode.
