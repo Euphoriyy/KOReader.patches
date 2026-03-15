@@ -6,6 +6,8 @@
         - A toggle for affecting TextBoxWidgets.
         - A toggle for changing the page background color (epub, html, fb2, txt...).
         - A toggle for affecting the ReaderFooter.
+        - A toggle for affecting the reader sides.
+        - A toggle for affecting the page gaps.
     Optionally, the color can be set with a color picker.
 --]]
 
@@ -29,6 +31,7 @@ local ReaderFooter = require("apps/reader/modules/readerfooter")
 local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
 local ReaderUI = require("apps/reader/readerui")
+local ReaderView = require("apps/reader/modules/readerview")
 local RenderImage = require("ui/renderimage")
 local Screen = require("device").screen
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
@@ -59,6 +62,8 @@ local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#00000
 local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)         -- Whether the background color of TextBoxWidgets should be changed (default: true)
 local PageBackgroundColor = Setting("ui_background_color_reader_page", false)       -- Whether the background color of the page should be changed (default: false)
 local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false)   -- Whether the background color of the ReaderFooter should be changed (default: false)
+local SidesBackgroundColor = Setting("ui_background_color_reader_sides", false)     -- Whether the background color of the reader sides should be changed (default: false)
+local GapBackgroundColor = Setting("ui_background_color_reader_gap", false)         -- Whether the background color of the page gap should be changed (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -191,6 +196,8 @@ local bg_cached = {
     set_textbox_color = TextBoxBackgroundColor.get(),
     set_page_color = PageBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
+    set_sides_color = SidesBackgroundColor.get(),
+    set_gap_color = GapBackgroundColor.get(),
     hex = HexBackgroundColor.get(),
     night_hex = NightHexBackgroundColor.get(),
     last_hex = nil,
@@ -465,6 +472,24 @@ local function background_color_menu()
                     if has_document_open() then
                         UIManager:broadcastEvent(Event:new("RefreshFooterBackground"))
                     end
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Apply to the reader sides"),
+                checked_func = SidesBackgroundColor.get,
+                callback = function()
+                    SidesBackgroundColor.toggle()
+                    bg_cached.set_sides_color = SidesBackgroundColor.get()
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Apply to the page gaps"),
+                checked_func = GapBackgroundColor.get,
+                callback = function()
+                    GapBackgroundColor.toggle()
+                    bg_cached.set_gap_color = GapBackgroundColor.get()
                 end,
             })
             return items
@@ -1290,4 +1315,38 @@ function ButtonTable:init()
             end
         end
     end
+end
+
+-- Change the background color for the reader sides & page gaps
+-- Page view mode
+function ReaderView:drawPageSurround(bb, x, y)
+    local outer_page_color = bg_cached.set_sides_color and bg_cached.bgcolor or self.outer_page_color
+
+    if self.dimen.h > self.visible_area.h then
+        bb:paintRectRGB32(x, y, self.dimen.w, self.state.offset.y, outer_page_color)
+        local bottom_margin = y + self.visible_area.h + self.state.offset.y
+        bb:paintRectRGB32(x, bottom_margin, self.dimen.w, self.state.offset.y +
+            self.footer:getHeight(), outer_page_color)
+    end
+    if self.dimen.w > self.visible_area.w then
+        bb:paintRectRGB32(x, y, self.state.offset.x, self.dimen.h, outer_page_color)
+        bb:paintRectRGB32(x + self.dimen.w - self.state.offset.x - 1, y,
+            self.state.offset.x + 1, self.dimen.h, outer_page_color)
+    end
+end
+
+-- Continuous view mode
+function ReaderView:drawPageBackground(bb, x, y)
+    bb:paintRectRGB32(
+        x, y, self.dimen.w, self.dimen.h,
+        bg_cached.set_sides_color and bg_cached.bgcolor or self.page_bgcolor
+    )
+end
+
+-- Continuous view mode - page gaps
+function ReaderView:drawPageGap(bb, x, y)
+    bb:paintRectRGB32(
+        x, y, self.dimen.w, self.page_gap.height,
+        bg_cached.set_gap_color and bg_cached.bgcolor or self.page_gap.color
+    )
 end
