@@ -55,7 +55,7 @@ local function Setting(name, default)
 end
 
 -- Settings
-local HexBackgroundColor = Setting("ui_background_color_hex", "#ffffff")            -- RGB hex for UI background color (default: #ffffff)
+local HexBackgroundColor = Setting("ui_background_color_hex", "#FFFFFF")            -- RGB hex for UI background color (default: #FFFFFF)
 local InvertBackgroundColor = Setting("ui_background_color_inverted", true)         -- Whether the UI background color should be inverted in night mode (default: true)
 local AltNightBackgroundColor = Setting("ui_background_color_alt_night", false)     -- Whether the UI background color should be changed to an alternative color in night mode (default: false)
 local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#000000") -- RGB hex for the alternative UI background color in night mode (default: #000000)
@@ -263,8 +263,11 @@ local function setBackgroundColor(hex)
         HexBackgroundColor.set(hex)
         bg_cached.hex = hex
     end
-    recomputeColors()
 
+    recomputeColors()
+end
+
+local function refresh()
     -- If TextBoxWidget colors are enabled, then update the file list
     if bg_cached.set_textbox_color then
         refreshFileManager()
@@ -321,6 +324,7 @@ local function set_color_menu()
                                     end
 
                                     setBackgroundColor(text)
+                                    refresh()
 
                                     touchmenu_instance:updateItems()
                                     UIManager:close(input_dialog)
@@ -353,6 +357,7 @@ local function pick_color_menu()
                 invert_in_night_mode = should_invert_wheel,
                 callback = function(hex)
                     setBackgroundColor(hex)
+                    refresh()
 
                     if touchmenu_instance then
                         touchmenu_instance:updateItems()
@@ -1349,4 +1354,32 @@ function ReaderView:drawPageGap(bb, x, y)
         x, y, self.dimen.w, self.page_gap.height,
         bg_cached.set_gap_color and bg_cached.bgcolor or self.page_gap.color
     )
+end
+
+-- Event handlers for when a theme is applied
+local original_FileManager_onApplyTheme = FileManager.onApplyTheme
+
+function FileManager:onApplyTheme()
+    if original_FileManager_onApplyTheme then
+        original_FileManager_onApplyTheme(self)
+    end
+
+    bg_cached.hex = HexBackgroundColor.get()
+    bg_cached.night_hex = NightHexBackgroundColor.get()
+    recomputeColors()
+    refresh()
+end
+
+local original_ReaderUI_onApplyTheme = ReaderUI.onApplyTheme
+
+function ReaderUI:onApplyTheme()
+    if original_ReaderUI_onApplyTheme then
+        original_ReaderUI_onApplyTheme(self)
+    end
+
+    bg_cached.hex = HexBackgroundColor.get()
+    bg_cached.night_hex = NightHexBackgroundColor.get()
+    bg_cached.alt_night_color = AltNightBackgroundColor.get()
+    recomputeColors()
+    refresh()
 end

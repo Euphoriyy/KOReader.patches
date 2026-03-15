@@ -36,12 +36,33 @@ Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing 
 
 Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4) by [IntrovertedMage](https://github.com/IntrovertedMage).
 
-<img src="img/progress-bar-color.png" style="width:80%; height:auto;">
+### [🞂 2-ui-themes.lua](2-ui-themes.lua)
+> [!IMPORTANT]
+> The visual theme picker and edit menu depend on features from the latest nightly of KOReader.
+> You can either update to the nightly or wait for the next release for full functionality.
+> For the foreground color to be previewed properly, inline markup colors must be enabled in the [UI font color patch](#-2-ui-font-colorlua).
+
+This patch adds the ability to set themes for the UI background and font colors.
+
+It requires [2-ui-font-color.lua](#-2-ui-font-colorlua) & [2-ui-background-color.lua](#-2-ui-background-colorlua).
+
+It can be configured under **🞂 Appearance 🞂 Themes** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+
+Themes can be previewed when choosing them. Themes can also be edited by holding down on them when in the visual theme picker.
+
+Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the colors to be picked visually.
+
+Inspired by [2-color-theme.lua](https://github.com/artemartemenko/koreader-color-themes) from [@artemartemenko](https://github.com/artemartemenko).
+
+<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-1.png"><img src="img/ui-themes-1.png" alt="" width="200px"></a>
+<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-2.png"><img src="img/ui-themes-2.png" alt="" width="200px"></a>
+<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-3.png"><img src="img/ui-themes-3.png" alt="" width="200px"></a>
+<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-4.png"><img src="img/ui-themes-4.png" alt="" width="200px"></a>
 
 ### [🞂 2-ui-font-color.lua](2-ui-font-color.lua)
 This patch adds the ability to change the RGB color of the UI font.
 
-It also adds inline markup color support (disabled by default) to UI text with the following syntax:
+It also adds inline markup color support to UI text with the following syntax:
 
 > **§color** text **§r**
 

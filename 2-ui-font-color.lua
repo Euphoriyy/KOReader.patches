@@ -40,12 +40,12 @@ end
 local HexFontColor = Setting("ui_font_color_hex", "#000000")               -- RGB hex for UI font color (default: #000000)
 local InvertFontColor = Setting("ui_font_color_inverted", true)            -- Whether the UI font color should be inverted in night mode (default: true)
 local AltNightFontColor = Setting("ui_font_color_alt_night", false)        -- Whether the UI font color should be changed to an alternative color in night mode (default: false)
-local NightHexFontColor = Setting("ui_font_color_night_hex", "#ffffff")    -- RGB hex for the alternative UI font color in night mode (default: #ffffff)
+local NightHexFontColor = Setting("ui_font_color_night_hex", "#FFFFFF")    -- RGB hex for the alternative UI font color in night mode (default: #FFFFFF)
 local TextBoxFontColor = Setting("ui_font_color_textbox", true)            -- Whether the font color of TextBoxWidgets should be changed (default: true)
 local DictionaryFontColor = Setting("ui_font_color_dict", true)            -- Whether the font color of the dictionary should be changed (default: true)
 local PageFontColor = Setting("ui_font_color_reader_page", false)          -- Whether the font color of the page should be changed (default: false)
 local ReaderOnlyFontColor = Setting("ui_font_color_reader_only", false)    -- Whether the font color should be changed in the reader only (default: false)
-local MarkupColors = Setting("ui_font_color_markup", false)                -- Whether the markup colors should be enabled (default: false)
+local MarkupColors = Setting("ui_font_color_markup", true)                 -- Whether the markup colors should be enabled (default: true)
 local InvertMarkupColors = Setting("ui_font_color_inverted_markup", false) -- Whether the markup colors should be inverted in night mode (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
@@ -207,7 +207,9 @@ local function setFontColor(hex)
     end
 
     recomputeFGColor()
+end
 
+local function refresh()
     -- If TextBoxWidget colors are enabled, then update the file list
     if cached.set_textbox_color then
         refreshFileManager()
@@ -262,6 +264,7 @@ local function set_color_menu()
                                     end
 
                                     setFontColor(string.upper(text))
+                                    refresh()
 
                                     touchmenu_instance:updateItems()
                                     UIManager:close(input_dialog)
@@ -294,6 +297,7 @@ local function pick_color_menu()
                 invert_in_night_mode = should_invert_wheel,
                 callback = function(hex)
                     setFontColor(hex)
+                    refresh()
 
                     if touchmenu_instance then
                         touchmenu_instance:updateItems()
@@ -864,3 +868,31 @@ UIManager:scheduleIn(1, function()
         end
     end
 end)
+
+-- Event handlers for when a theme is applied
+local original_FileManager_onApplyTheme = FileManager.onApplyTheme
+
+function FileManager:onApplyTheme()
+    if original_FileManager_onApplyTheme then
+        original_FileManager_onApplyTheme(self)
+    end
+
+    cached.hex = HexFontColor.get()
+    cached.night_hex = NightHexFontColor.get()
+    recomputeFGColor()
+    refresh()
+end
+
+local original_ReaderUI_onApplyTheme = ReaderUI.onApplyTheme
+
+function ReaderUI:onApplyTheme()
+    if original_ReaderUI_onApplyTheme then
+        original_ReaderUI_onApplyTheme(self)
+    end
+
+    cached.hex = HexFontColor.get()
+    cached.night_hex = NightHexFontColor.get()
+    cached.alt_night_color = AltNightFontColor.get()
+    recomputeFGColor()
+    refresh()
+end
