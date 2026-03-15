@@ -565,8 +565,10 @@ local original_ScreenSaverWidget_init = ScreenSaverWidget.init
 function ScreenSaverWidget:init()
     original_ScreenSaverWidget_init(self)
 
-    self[1].original_background = self.background
-    self[1].background = EXCLUSION_COLOR
+    if self.background then
+        self[1].original_background = self.background
+        self[1].background = EXCLUSION_COLOR
+    end
 end
 
 -- Method to fill icon backgrounds
