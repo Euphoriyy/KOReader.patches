@@ -36,6 +36,8 @@ Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing 
 
 Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/IntrovertedMage/6ea38091292310241ba436f930ee0cb4) by [IntrovertedMage](https://github.com/IntrovertedMage).
 
+<img src="img/progress-bar-color.png" style="width:80%; height:auto;">
+
 ### [🞂 2-ui-themes.lua](2-ui-themes.lua)
 > [!IMPORTANT]
 > The visual theme picker and edit menu depend on features from the latest nightly of KOReader.
