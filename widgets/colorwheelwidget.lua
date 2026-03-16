@@ -43,7 +43,7 @@ local ColorWheelWidget = FocusManager:extend {
     -- | 0.5        | 25%             | 4x             |
     -- | 0.25       | 6.25%           | 16x            |
     -- | 0.125      | 1.56%           | 64x            |
-    draw_scale           = 0.25,
+    draw_scale           = 0.5,
 
     cancel_text          = "Cancel",
     ok_text              = "Apply",
