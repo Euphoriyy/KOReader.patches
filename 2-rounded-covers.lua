@@ -12,95 +12,98 @@ local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
 local userpatch = require("userpatch")
 
-local function clipRoundedRect(bb, x, y, w, h, r, color)
-    if r <= 0 then return end
-    if 2 * r > w then r = math.floor(w / 2) end
-    if 2 * r > h then r = math.floor(h / 2) end
+local COVER_CORNER_SCALE = 1.0 -- 1.0 = pixel-perfect, lower = faster but choppier
 
-    local r2 = r * r
+local _corner_cache = {}
 
-    -- Helper: clip one corner
-    local function clipCorner(cx, cy, start_x, end_x, start_y, end_y)
-        for px = start_x, end_x do
-            for py = start_y, end_y do
-                local dx = px - cx
-                local dy = py - cy
-                if dx * dx + dy * dy > r2 then
-                    bb:setPixelClamped(px, py, color)
+local function getCornerCache(r, thickness, scale)
+    scale     = scale or 1.0
+    local dr  = math.max(1, math.floor(r * scale))
+    local dt  = math.max(1, math.floor(math.max(1, thickness) * scale))
+    local key = dr .. "," .. dt
+    if _corner_cache[key] then return _corner_cache[key] end
+
+    local r2     = dr * dr
+    local inner2 = (dr - dt) * (dr - dt)
+    local clip   = {}
+    local border = {}
+
+    for dy = 0, dr - 1 do
+        for dx = 0, dr - 1 do
+            local idx   = dy * dr + dx + 1
+            local dist2 = dx * dx + dy * dy
+            clip[idx]   = dist2 > r2
+            border[idx] = dist2 >= inner2 and dist2 <= r2
+        end
+    end
+
+    _corner_cache[key] = { clip = clip, border = border, dr = dr }
+    return _corner_cache[key]
+end
+
+local function applyMask(bb, mask, sx, sy, r, dr, color, flip_x, flip_y)
+    local step = r / dr
+    local idx  = 0
+    for dy = 0, dr - 1 do
+        local fy = flip_y and (dr - 1 - dy) or dy
+        for dx = 0, dr - 1 do
+            idx = idx + 1
+            if mask[idx] then
+                local fx = flip_x and (dr - 1 - dx) or dx
+                -- block fill for scale < 1, single pixel for scale = 1
+                if step <= 1.0 then
+                    bb:setPixelClamped(sx + fx, sy + fy, color)
+                else
+                    local fx0 = math.floor(fx * step)
+                    local fx1 = math.floor((fx + 1) * step) - 1
+                    local fy0 = math.floor(fy * step)
+                    local fy1 = math.floor((fy + 1) * step) - 1
+                    for bfy = fy0, fy1 do
+                        for bfx = fx0, fx1 do
+                            bb:setPixelClamped(sx + bfx, sy + bfy, color)
+                        end
+                    end
                 end
             end
         end
     end
-
-    -- Top-left
-    clipCorner(
-        x + r - 1, y + r - 1,
-        x, x + r - 1,
-        y, y + r - 1
-    )
-
-    -- Top-right
-    clipCorner(
-        x + w - r, y + r - 1,
-        x + w - r, x + w - 1,
-        y, y + r - 1
-    )
-
-    -- Bottom-left
-    clipCorner(
-        x + r - 1, y + h - r,
-        x, x + r - 1,
-        y + h - r, y + h - 1
-    )
-
-    -- Bottom-right
-    clipCorner(
-        x + w - r, y + h - r,
-        x + w - r, x + w - 1,
-        y + h - r, y + h - 1
-    )
 end
 
-local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness)
+local function clipRoundedRect(bb, x, y, w, h, r, color, scale)
+    if r <= 0 then return end
+    if 2 * r > w then r = math.floor(w / 2) end
+    if 2 * r > h then r = math.floor(h / 2) end
+
+    local cache = getCornerCache(r, r, scale)
+    local dr    = cache.dr
+
+    applyMask(bb, cache.clip, x, y, r, dr, color, true, true)
+    applyMask(bb, cache.clip, x + w - r, y, r, dr, color, false, true)
+    applyMask(bb, cache.clip, x, y + h - r, r, dr, color, true, false)
+    applyMask(bb, cache.clip, x + w - r, y + h - r, r, dr, color, false, false)
+end
+
+local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness, scale)
     thickness = thickness or 1
     if r <= 0 then
-        -- Fallback to normal rectangle border
         bb:paintBorder(x, y, w, h, thickness, color, 0, false)
         return
     end
     if 2 * r > w then r = math.floor(w / 2) end
     if 2 * r > h then r = math.floor(h / 2) end
 
-    -- Draw straight edges (top, bottom, left, right) leaving corners
-    bb:paintRect(x + r, y, w - 2 * r, thickness, color)       -- top
-    bb:paintRect(x + r, y + h - thickness, w - 2 * r, thickness, color) -- bottom
-    bb:paintRect(x, y + r, thickness, h - 2 * r, color)       -- left
-    bb:paintRect(x + w - thickness, y + r, thickness, h - 2 * r, color) -- right
+    bb:paintRect(x + r, y, w - 2 * r, thickness, color)
+    bb:paintRect(x + r, y + h - thickness, w - 2 * r, thickness, color)
+    bb:paintRect(x, y + r, thickness, h - 2 * r, color)
+    bb:paintRect(x + w - thickness, y + r, thickness, h - 2 * r, color)
 
-    local r2 = r * r
+    local cache = getCornerCache(r, thickness, scale)
+    local dr    = cache.dr
 
-    -- Helper: draw one quarter circle
-    local function drawCorner(cx, cy, start_x, end_x, start_y, end_y)
-        for px = start_x, end_x do
-            for py = start_y, end_y do
-                local dx = px - cx
-                local dy = py - cy
-                local dist2 = dx * dx + dy * dy
-                if dist2 >= (r - thickness) ^ 2 and dist2 <= r2 then
-                    bb:setPixelClamped(px, py, color)
-                end
-            end
-        end
-    end
-
-    -- Top-left
-    drawCorner(x + r - 1, y + r - 1, x, x + r - 1, y, y + r - 1)
-    -- Top-right
-    drawCorner(x + w - r, y + r - 1, x + w - r, x + w - 1, y, y + r - 1)
-    -- Bottom-left
-    drawCorner(x + r - 1, y + h - r, x, x + r - 1, y + h - r, y + h - 1)
-    -- Bottom-right
-    drawCorner(x + w - r, y + h - r, x + w - r, x + w - 1, y + h - r, y + h - 1)
+    applyMask(bb, cache.border, x, y, r, dr, color, true, true)
+    applyMask(bb, cache.border, x + w - r, y, r, dr, color, false, true)
+    applyMask(bb, cache.border, x, y + h - r, r, dr, color, true, false)
+    applyMask(bb, cache.border, x + w - r, y + h - r, r, dr, color, false, false)
 end
 
 local function patchBookCoverRoundedCorners(plugin)
@@ -152,8 +155,8 @@ local function patchBookCoverRoundedCorners(plugin)
             local border_color = Blitbuffer.COLOR_BLACK
             local radius = Screen:scaleBySize(24)
 
-            clipRoundedRect(bb, fx, fy, fw, fh, radius, bgcolor)
-            strokeRoundedRect(bb, fx, fy, fw, fh, radius, border_color, cover_border)
+            clipRoundedRect(bb, fx, fy, fw, fh, radius, bgcolor, COVER_CORNER_SCALE)
+            strokeRoundedRect(bb, fx, fy, fw, fh, radius, border_color, cover_border, COVER_CORNER_SCALE)
         end
     end
 end
