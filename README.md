@@ -181,6 +181,7 @@ The options are:
 - `saturation`
 - `value`
 - `invert_in_night_mode`
+- `draw_scale`
 - `cancel_text`
 - `apply_text`
 
