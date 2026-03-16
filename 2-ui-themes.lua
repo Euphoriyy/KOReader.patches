@@ -406,7 +406,7 @@ local function getThemeButtons(touchmenu_instance, dialog_ref)
     for i, theme in ipairs(themes) do
         local bgcolor = Blitbuffer.colorFromString(theme.bg)
         buttons[i] = { {
-            text = T(_("§%1 §%2 %3 §r"), theme.night and "blue ⏾" or "orange ☀️",
+            text = T(_("§%1 §%2 %3 §r "), theme.night and "blue ⏾" or "orange ☀️",
                 string.lower(theme.fg), theme.label),
             menu_style = true,
             original_background = Screen.night_mode and bgcolor:invert() or bgcolor,
@@ -414,7 +414,7 @@ local function getThemeButtons(touchmenu_instance, dialog_ref)
             callback = function()
                 UIManager:show(MultiConfirmBox:new({
                     text = _("Apply the theme to:"),
-                    choice1_text = _("§orange ☀️ Day mode§r"),
+                    choice1_text = _("§orange ☀️ Day mode§r "),
                     choice1_callback = function()
                         CurrentDayTheme.set(theme)
 
@@ -422,7 +422,7 @@ local function getThemeButtons(touchmenu_instance, dialog_ref)
                         setForegroundColor(theme.fg, false)
                         UIManager:broadcastEvent(Event:new("ApplyTheme"))
                     end,
-                    choice2_text = _("§blue ⏾ Night mode§r"),
+                    choice2_text = _("§blue ⏾ Night mode§r "),
                     choice2_callback = function()
                         CurrentNightTheme.set(theme)
 
@@ -490,7 +490,7 @@ edit_menu = function(touchmenu_instance, theme, updialog_ref)
 
     local edit_buttons = {
         { {
-            text = _("§white ✒ Rename§r"),
+            text = _("§white ✒ Rename§r "),
             menu_style = true,
             original_background = button_bg_colors[1],
             background = EXCLUSION_COLOR,
@@ -530,7 +530,7 @@ edit_menu = function(touchmenu_instance, theme, updialog_ref)
             end,
         } },
         { {
-            text = T(_("§white ● Edit background color§r")),
+            text = T(_("§white ● Edit background color§r ")),
             menu_style = true,
             original_background = button_bg_colors[2],
             background = EXCLUSION_COLOR,
@@ -563,7 +563,7 @@ edit_menu = function(touchmenu_instance, theme, updialog_ref)
             end,
         } },
         { {
-            text = T(_("§white ＴEdit foreground color§r")),
+            text = T(_("§white ＴEdit foreground color§r ")),
             menu_style = true,
             original_background = button_bg_colors[3],
             background = EXCLUSION_COLOR,
@@ -594,7 +594,7 @@ edit_menu = function(touchmenu_instance, theme, updialog_ref)
             end,
         } },
         { {
-            text = _("§white ✖ Delete§r"),
+            text = _("§white ✖ Delete§r "),
             menu_style = true,
             original_background = button_bg_colors[4],
             background = EXCLUSION_COLOR,
@@ -640,12 +640,12 @@ end
 local function select_mode(name, bg_hex, fg_hex)
     UIManager:show(MultiConfirmBox:new({
         text = _("The theme is for:"),
-        choice1_text = _("§orange ☀️ Day mode§r"),
+        choice1_text = _("§orange ☀️ Day mode§r "),
         choice1_callback = function()
             local theme = add_theme(name, bg_hex, fg_hex, false)
             ask_to_apply(theme)
         end,
-        choice2_text = _("§blue ⏾ Night mode§r"),
+        choice2_text = _("§blue ⏾ Night mode§r "),
         choice2_callback = function()
             local theme = add_theme(name, bg_hex, fg_hex, true)
             ask_to_apply(theme)
