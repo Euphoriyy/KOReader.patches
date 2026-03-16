@@ -94,6 +94,8 @@ local function loadWidgetsDir()
         return
     end
 
+    package.path = WIDGETS_DIR .. "?.lua;" .. package.path
+
     local files = {}
     for entry in lfs.dir(WIDGETS_DIR) do
         if entry:match("%.lua$") then
@@ -101,15 +103,13 @@ local function loadWidgetsDir()
         end
     end
     table.sort(files)
-
     for _, filename in ipairs(files) do
         local name = filename:gsub("%.lua$", "")
-        local path = WIDGETS_DIR .. filename
-        local ok, widget = pcall(dofile, path)
+        local ok, widget = pcall(require, name)
         if ok then
             CustomWidgets.register(name, widget)
         else
-            logger.warn("CustomWidgets: failed to load", path, ":", widget)
+            logger.warn("CustomWidgets: failed to load", filename, ":", widget)
         end
     end
 end
