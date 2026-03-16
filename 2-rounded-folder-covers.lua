@@ -36,6 +36,7 @@ local logger = require("logger")
 local aspect_ratio = 2 / 3     -- adjust aspect ratio of folder cover
 local stretch_limit = 50       -- adjust the stretching limit
 local fill = false             -- set true to fill the entire cell ignoring aspect ratio
+local show_file_count = true   -- set to false to hide the file count
 local file_count_size = 14     -- font size of the file count badge
 local folder_font_size = 20    -- font size of the folder name
 local folder_border = 0.5      -- thickness of folder border
@@ -404,7 +405,7 @@ local function patchCoverBrowser(plugin)
             if count_str then item_count = tonumber(count_str) end
         end
 
-        if item_count > 0 then
+        if show_file_count and item_count > 0 then
             local nbitems = TextWidget:new {
                 text = tostring(item_count),
                 face = Font:getFace("cfont", Folder.face.nb_items_font_size),
