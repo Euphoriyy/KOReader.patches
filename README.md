@@ -73,7 +73,7 @@ It can be configured under **🞂 Appearance 🞂 Font color:** on the <sub><img
 
 Besides the color, it has options for:
 - A toggle to use an alternative color in night mode.
-- A toggle to invert it in night mode.
+- A toggle to invert the background in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle for the dictionary text.
 - A toggle to change the page font color. (epub, html, fb2, txt...)
@@ -94,7 +94,8 @@ It can be configured under **🞂 Appearance 🞂 Background color:** on the <su
 
 Besides the color, it has options for:
 - A toggle to use an alternative color in night mode.
-- A toggle to invert it in night mode.
+- A toggle to invert icons in night mode (when an alternative color is set).
+- A toggle to invert the background in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle to change the page background color. (epub, html, fb2, txt...)
 - A toggle for the reader footer.
