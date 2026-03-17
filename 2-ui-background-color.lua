@@ -1173,7 +1173,7 @@ function ReaderStyleTweak:getCssText()
 
         local bg_css = [[
             body {
-                background-color: ]] .. bg_hex .. [[;
+                background-color: ]] .. bg_hex .. [[ !important;
             }
         ]]
         return util.trim(bg_css .. original_css)
