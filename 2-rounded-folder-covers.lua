@@ -192,6 +192,9 @@ end
 
 local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness, scale)
     thickness = thickness or 1
+    if Screen.bb:getInverse() == 1 then
+        color = color:invert()
+    end
     if r <= 0 then
         bb:paintBorder(x, y, w, h, thickness, color, 0, false)
         return
