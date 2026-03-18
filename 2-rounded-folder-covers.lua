@@ -33,15 +33,14 @@ local Screen = Device.screen
 local logger = require("logger")
 
 --========================== Edit your preferences here ================================
-local aspect_ratio = 2 / 3     -- adjust aspect ratio of folder cover
-local stretch_limit = 50       -- adjust the stretching limit
-local fill = false             -- set true to fill the entire cell ignoring aspect ratio
-local show_file_count = true   -- set to false to hide the file count
-local file_count_size = 14     -- font size of the file count badge
-local folder_font_size = 20    -- font size of the folder name
-local folder_border = 0.5      -- thickness of folder border
-local folder_name = true       -- set to false to remove folder title from the center
-local cover_corner_scale = 1.0 -- 1.0 = pixel-perfect, lower = faster but choppier
+local aspect_ratio = 2 / 3   -- adjust aspect ratio of folder cover
+local stretch_limit = 50     -- adjust the stretching limit
+local fill = false           -- set true to fill the entire cell ignoring aspect ratio
+local show_file_count = true -- set to false to hide the file count
+local file_count_size = 14   -- font size of the file count badge
+local folder_font_size = 20  -- font size of the folder name
+local folder_border = 0.5    -- thickness of folder border
+local folder_name = true     -- set to false to remove folder title from the center
 --======================================================================================
 
 local FolderCover = {
@@ -123,10 +122,9 @@ local Folder = {
 
 local _corner_cache = {}
 
-local function getCornerCache(r, thickness, scale)
-    scale     = scale or 1.0
-    local dr  = math.max(1, math.floor(r * scale))
-    local dt  = math.max(1, math.floor(math.max(1, thickness) * scale))
+local function getCornerCache(r, thickness)
+    local dr  = math.max(1, math.floor(r))
+    local dt  = math.max(1, math.floor(math.max(1, thickness)))
     local key = dr .. "," .. dt
     if _corner_cache[key] then return _corner_cache[key] end
 
@@ -176,44 +174,18 @@ local function applyMask(bb, mask, sx, sy, r, dr, color, flip_x, flip_y)
     end
 end
 
-local function clipRoundedRect(bb, x, y, w, h, r, color, scale)
+local function clipRoundedRect(bb, x, y, w, h, r, color)
     if r <= 0 then return end
     if 2 * r > w then r = math.floor(w / 2) end
     if 2 * r > h then r = math.floor(h / 2) end
 
-    local cache = getCornerCache(r, r, scale)
+    local cache = getCornerCache(r, r)
     local dr    = cache.dr
 
     applyMask(bb, cache.clip, x, y, r, dr, color, true, true)
     applyMask(bb, cache.clip, x + w - r, y, r, dr, color, false, true)
     applyMask(bb, cache.clip, x, y + h - r, r, dr, color, true, false)
     applyMask(bb, cache.clip, x + w - r, y + h - r, r, dr, color, false, false)
-end
-
-local function strokeRoundedRect(bb, x, y, w, h, r, color, thickness, scale)
-    thickness = thickness or 1
-    if Screen.bb:getInverse() == 1 then
-        color = color:invert()
-    end
-    if r <= 0 then
-        bb:paintBorder(x, y, w, h, thickness, color, 0, false)
-        return
-    end
-    if 2 * r > w then r = math.floor(w / 2) end
-    if 2 * r > h then r = math.floor(h / 2) end
-
-    bb:paintRect(x + r, y, w - 2 * r, thickness, color)
-    bb:paintRect(x + r, y + h - thickness, w - 2 * r, thickness, color)
-    bb:paintRect(x, y + r, thickness, h - 2 * r, color)
-    bb:paintRect(x + w - thickness, y + r, thickness, h - 2 * r, color)
-
-    local cache = getCornerCache(r, thickness, scale)
-    local dr    = cache.dr
-
-    applyMask(bb, cache.border, x, y, r, dr, color, true, true)
-    applyMask(bb, cache.border, x + w - r, y, r, dr, color, false, true)
-    applyMask(bb, cache.border, x, y + h - r, r, dr, color, true, false)
-    applyMask(bb, cache.border, x + w - r, y + h - r, r, dr, color, false, false)
 end
 
 local function patchCoverBrowser(plugin)
@@ -506,13 +478,13 @@ local function patchCoverBrowser(plugin)
         local bgcolor = bb:getPixel(fx - 1, fy - 1)
 
         local cover_border = Screen:scaleBySize(folder_border)
-        bb:paintBorder(image_x, image_y, image_size.w, image_size.h, cover_border, Blitbuffer.COLOR_BLACK, 0, false)
 
         local border_color = Blitbuffer.COLOR_BLACK
-        local radius = Screen:scaleBySize(24)
+        local corner_radius = Screen:scaleBySize(24)
+        local border_radius = Screen:scaleBySize(22)
 
-        clipRoundedRect(bb, fx, fy, image_size.w, image_size.h, radius, bgcolor, cover_corner_scale)
-        strokeRoundedRect(bb, fx, fy, image_size.w, image_size.h, radius, border_color, cover_border, cover_corner_scale)
+        clipRoundedRect(bb, fx, fy, image_size.w, image_size.h, corner_radius, bgcolor)
+        bb:paintBorder(image_x, image_y, image_size.w, image_size.h, cover_border, border_color, border_radius, false)
     end
 
     local orig_CoverBrowser_addToMainMenu = plugin.addToMainMenu
