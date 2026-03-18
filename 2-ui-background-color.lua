@@ -578,13 +578,11 @@ function FrameContainer:paintTo(bb, x, y)
     local original_color = self.color
 
     -- Change background color if it isn't transparent (nil)
-    if original_background then
-        if not is_excluded(original_background) then
-            self.background = bg_cached.bgcolor
-            self.color = bg_cached.bgcolor:invert()
-        else
-            self.background = self.original_background or Blitbuffer.COLOR_WHITE
-        end
+    if original_background and not is_excluded(original_background) then
+        self.background = bg_cached.bgcolor
+        self.color = bg_cached.bgcolor:invert()
+    elseif is_excluded(original_background) then
+        self.background = self.original_background or Blitbuffer.COLOR_WHITE
     end
 
     original_FrameContainer_paintTo(self, bb, x, y)
