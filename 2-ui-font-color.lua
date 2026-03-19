@@ -453,8 +453,7 @@ end
 local function patch(menu, order, menu_entries)
     -- Ensure the appearance entry exists in order.setting
     if not contains(order.setting, "appearance") then
-        table.insert(order.setting, "----------------------------")
-        table.insert(order.setting, "appearance")
+        table.insert(order.setting, 6, "appearance")
     end
 
     -- Ensure the appearance menu exists
