@@ -55,6 +55,16 @@ local function has_document_open()
     return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
 end
 
+-- Helper: check if there are any highlights on the current page
+local function has_highlights()
+    if not has_document_open() then
+        return false
+    end
+
+    local page = ReaderUI.instance.paging.current_page
+    return #ReaderUI.instance.highlight:getPageSavedHighlights(page) > 0
+end
+
 -- Helper: check if this is a flashing refresh
 local function is_flashing_refresh(refresh_mode, region, FULL_REFRESH_COUNT, refresh_count, refresh_counted,
                                    currently_scrolling)
@@ -80,7 +90,8 @@ local function is_flashing_refresh(refresh_mode, region, FULL_REFRESH_COUNT, ref
     end
 
     return (ForceFrontlightRefresh.get() and refresh_mode == "partial") or
-        (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui"))
+        (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui")) or
+        (Device:hasKaleidoWfm() and has_highlights())
 end
 
 -- Hook into UIManager quit to prevent frontlight dimming on quit
@@ -118,7 +129,10 @@ function UIManager._refresh(self, refresh_mode, region, dither)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
     if not EnableFrontlightRefresh.get() or restoring or not patch_active or not Screen.night_mode or
         (ReaderOnlyFrontlightRefresh.get() and not has_document_open()) or
-        not is_flashing_refresh(refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count, self.refresh_counted, self.currently_scrolling)
+        not is_flashing_refresh(
+            refresh_mode, region, self.FULL_REFRESH_COUNT, self.refresh_count,
+            self.refresh_counted, self.currently_scrolling
+        )
     then
         return original_refresh(self, refresh_mode, region, dither)
     end
