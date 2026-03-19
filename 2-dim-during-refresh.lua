@@ -49,6 +49,7 @@ local rel_dim = {
 local patch_active = true
 local restoring = false
 local dimmed = false
+local current_page = nil
 
 -- Helper: check if we have a document open
 local function has_document_open()
@@ -61,8 +62,11 @@ local function has_highlights()
         return false
     end
 
-    local page = ReaderUI.instance.paging.current_page
-    return #ReaderUI.instance.highlight:getPageSavedHighlights(page) > 0
+    -- Check for highlights after changing pages
+    local old_page = current_page
+    current_page = ReaderUI.instance.paging.current_page
+    return old_page and current_page ~= old_page and
+        #ReaderUI.instance.highlight:getPageSavedHighlights(current_page) > 0
 end
 
 -- Helper: check if this is a flashing refresh
