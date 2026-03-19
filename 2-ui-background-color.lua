@@ -14,7 +14,6 @@
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("ui/widget/button")
-local ButtonDialog = require("ui/widget/buttondialog")
 local ButtonTable = require("ui/widget/buttontable")
 local Cache = require("cache")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
@@ -28,7 +27,6 @@ local ImageWidget = require("ui/widget/imagewidget")
 local InputText = require("ui/widget/inputtext")
 local LineWidget = require("ui/widget/linewidget")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
-local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
 local ReaderUI = require("apps/reader/readerui")
 local ReaderView = require("apps/reader/modules/readerview")
@@ -578,7 +576,7 @@ function FrameContainer:paintTo(bb, x, y)
     local original_color = self.color
 
     -- Change background color if it isn't transparent (nil)
-    if original_background and not is_excluded(original_background) then
+    if original_background and not is_excluded(original_background) and original_background == Blitbuffer.COLOR_WHITE then
         self.background = bg_cached.bgcolor
         self.color = bg_cached.bgcolor:invert()
     elseif is_excluded(original_background) then
@@ -1232,12 +1230,8 @@ userpatch.registerPatchPluginFunc("statistics", function()
 
                         if Screen.night_mode and
                             (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
-                            span_w.original_background = span_w.background:invert()
-                        else
-                            span_w.original_background = span_w.background
+                            span_w.background = span_w.background:invert()
                         end
-
-                        span_w.background = EXCLUSION_COLOR
                     end
                 end
             end
@@ -1256,12 +1250,8 @@ userpatch.registerPatchPluginFunc("statistics", function()
         if span then
             if Screen.night_mode and
                 (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
-                span.original_background = span.background:invert()
-            else
-                span.original_background = span.background
+                span.background = span.background:invert()
             end
-
-            span.background = EXCLUSION_COLOR
         end
         return span
     end
@@ -1285,43 +1275,11 @@ userpatch.registerPatchPluginFunc("statistics", function()
         if span then
             if Screen.night_mode and
                 (bg_cached.alt_night_color or not bg_cached.invert_in_night_mode) then
-                span.original_background = span.background:invert()
-            else
-                span.original_background = span.background
+                span.background = span.background:invert()
             end
-
-            span.background = EXCLUSION_COLOR
         end
     end
 end)
-
--- Restore background colors to the reader highlight color dialog
-function ReaderHighlight:showHighlightColorDialog(caller_callback, curr_color)
-    local dialog
-    local buttons = {}
-    for i, v in ipairs(self.highlight_colors) do
-        local color_name, color = unpack(v)
-        buttons[i] = { {
-            text = color ~= curr_color and color_name or color_name .. "  ✓",
-            menu_style = true,
-            original_background = self:getHighlightColor(color),
-            background = EXCLUSION_COLOR,
-            callback = function()
-                if color ~= curr_color then
-                    caller_callback(color)
-                end
-                UIManager:close(dialog)
-            end,
-        } }
-    end
-    dialog = ButtonDialog:new {
-        buttons = buttons,
-        width_factor = 0.4,
-        colorful = true,
-        dithered = true,
-    }
-    UIManager:show(dialog)
-end
 
 -- Propagate original_background from the button table entries to each button's FrameContainer
 local original_ButtonTable_init = ButtonTable.init
