@@ -40,8 +40,7 @@ Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/Intro
 
 ### [🞂 2-ui-themes.lua](2-ui-themes.lua)
 > [!IMPORTANT]
-> The visual theme picker and edit menu depend on features from the latest nightly of KOReader.
-> You can either update to the nightly or wait for the next release for full functionality.
+> The visual theme picker and edit menu depend on features from the latest release of KOReader (v2026.03).
 > For the foreground color to be previewed properly, inline markup colors must be enabled in the [UI font color patch](#-2-ui-font-colorlua).
 
 This patch adds the ability to set themes for the UI background and font colors.
@@ -113,8 +112,8 @@ Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing 
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
 
 > [!WARNING]
-> This patch is now obsolete as of the newest nightly (v2025.10-182+) with koreader/koreader#14954.
-> It should be removed when updating to the nightly or new releases.
+> This patch is now obsolete as of the newest release (v2026.03) with koreader/koreader#14954.
+> It should be removed when updating to new releases or the nightly.
 
 This patch adds a document option to invert CBZs/PDFs in night mode.
 It is useful for reading comics/manga in night mode.
