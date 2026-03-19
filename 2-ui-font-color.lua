@@ -26,6 +26,7 @@ local TextWidget = require("ui/widget/textwidget")
 local ToggleSwitch = require("ui/widget/toggleswitch")
 local UIManager = require("ui/uimanager")
 local bit = require("bit")
+local logger = require("logger")
 local util = require("util")
 
 local function Setting(name, default)
@@ -533,6 +534,98 @@ function UIManager:SetNightMode(night_mode)
     end
 end
 
+local band = bit.band
+local bor = bit.bor
+local lshift = bit.lshift
+
+local function utf8Chars(input_text)
+    local function read_next_glyph(input, pos)
+        if string.len(input) < pos then return nil end
+        local value = string.byte(input, pos)
+        if band(value, 0x80) == 0 then
+            --- @todo check valid ranges
+            return pos + 1, value, string.sub(input, pos, pos)
+        elseif band(value, 0xC0) == 0x80 -- invalid, continuation
+            or band(value, 0xF8) == 0xF8 -- 5-or-more byte sequence, illegal due to RFC3629
+        then
+            return pos + 1, 0xFFFD, "\xFF\xFD"
+        else
+            local glyph, bytes_left
+            if band(value, 0xE0) == 0xC0 then
+                glyph = band(value, 0x1F)
+                bytes_left = 1
+            elseif band(value, 0xF0) == 0xE0 then
+                glyph = band(value, 0x0F)
+                bytes_left = 2
+            elseif band(value, 0xF8) == 0xF0 then
+                glyph = band(value, 0x07)
+                bytes_left = 3
+            else
+                return pos + 1, 0xFFFD, "\xFF\xFD"
+            end
+            if string.len(input) < (pos + bytes_left) then
+                return pos + 1, 0xFFFD, "\xFF\xFD"
+            end
+            for i = pos + 1, pos + bytes_left do
+                value = string.byte(input, i)
+                if band(value, 0xC0) == 0x80 then
+                    glyph = bor(lshift(glyph, 6), band(value, 0x3F))
+                else
+                    -- invalid UTF8 continuation - don't be greedy, just skip
+                    -- the initial char of the sequence.
+                    return pos + 1, 0xFFFD, "\xFF\xFD"
+                end
+            end
+            --- @todo check for valid ranges here!
+            return pos + bytes_left + 1, glyph, string.sub(input, pos, pos + bytes_left)
+        end
+    end
+    return read_next_glyph, input_text, 1
+end
+
+-- Hook into fallback text rendering for when xtext is disabled and add support for RGB fgcolors
+function RenderText:renderUtf8Text(dest_bb, x, baseline, face, text, kerning, bold, fgcolor, width, char_pads)
+    if not text then
+        logger.warn("renderUtf8Text called without text")
+        return 0
+    end
+
+    if not fgcolor then
+        fgcolor = Blitbuffer.COLOR_BLACK
+    end
+
+    local pen_x = 0
+    local prevcharcode = 0
+    local text_width = dest_bb:getWidth() - x
+    if width and width < text_width then
+        text_width = width
+    end
+    local char_idx = 0
+    for _, charcode, uchar in utf8Chars(text) do
+        if pen_x < text_width then
+            local glyph = self:getGlyph(face, charcode, bold)
+            if kerning and (prevcharcode ~= 0) then
+                pen_x = pen_x + face.ftsize:getKerning(prevcharcode, charcode)
+            end
+            dest_bb:colorblitFromRGB32(
+                glyph.bb,
+                x + pen_x + glyph.l,
+                baseline - glyph.t,
+                0, 0,
+                glyph.bb:getWidth(), glyph.bb:getHeight(),
+                fgcolor)
+            pen_x = pen_x + glyph.ax
+            prevcharcode = charcode
+        end -- if pen_x < text_width
+        if char_pads then
+            char_idx = char_idx + 1
+            pen_x = pen_x + (char_pads[char_idx] or 0)
+        end
+    end
+
+    return pen_x
+end
+
 -- Color parsing helpers
 local COLOR_MAP = {
     black    = Blitbuffer.COLOR_BLACK,
@@ -719,10 +812,14 @@ function TextWidget:paintTo(bb, x, y)
             if has_markers then
                 local cursor_x = x
                 for _, seg in ipairs(self._color_segments) do
+                    local fgcolor = seg.color or self.fgcolor
+                    if Screen.night_mode and not InvertMarkupColors.get() and seg.color and fgcolor then
+                        fgcolor = fgcolor:invert()
+                    end
                     local seg_w = RenderText:sizeUtf8Text(cursor_x, bb:getWidth(), self.face, seg.text, true, self.bold)
                         .x
                     RenderText:renderUtf8Text(bb, cursor_x, y + self._baseline_h, self.face, seg.text,
-                        true, self.bold, seg.color or self.fgcolor, seg_w)
+                        true, self.bold, fgcolor, seg_w)
                     cursor_x = cursor_x + seg_w
                 end
             else
