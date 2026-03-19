@@ -263,7 +263,7 @@ end
 function ReaderMenu:setUpdateItemTable()
     -- Add main menu entry with submenu
     local order = ReaderMenuOrder.screen
-    table.insert(order, #order - 6, "frontlight_refresh")
+    table.insert(order, 6, "frontlight_refresh")
 
     set_menu(self, self.menu_items)
     original_readermenu_setUpdateItemTable(self)
