@@ -43,7 +43,6 @@ local DEFAULT_DAY_THEMES = {
     { key = "light_gray",       label = "Light Gray",       bg = "#EDEDED", fg = "#4F4F4F", night = false },
     { key = "warm_stone",       label = "Warm Stone",       bg = "#D7D5D3", fg = "#000000", night = false },
     { key = "book_white",       label = "Book White",       bg = "#F9F6F0", fg = "#1C1C1C", night = false },
-    { key = "contrast",         label = "Contrast",         bg = "#FFFFFF", fg = "#000000", night = false },
     -- Warm/Sepia
     { key = "cream",            label = "Cream",            bg = "#F3EFD8", fg = "#111111", night = false },
     { key = "parchment",        label = "Parchment",        bg = "#EBE0C9", fg = "#2C1A0E", night = false },
