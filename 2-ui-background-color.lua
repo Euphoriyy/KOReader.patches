@@ -1340,6 +1340,7 @@ function FileManager:onApplyTheme()
 
     bg_cached.hex = HexBackgroundColor.get()
     bg_cached.night_hex = NightHexBackgroundColor.get()
+    bg_cached.alt_night_color = AltNightBackgroundColor.get()
     recomputeColors()
     refresh()
 end

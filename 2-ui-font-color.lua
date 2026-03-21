@@ -975,6 +975,7 @@ function FileManager:onApplyTheme()
 
     cached.hex = HexFontColor.get()
     cached.night_hex = NightHexFontColor.get()
+    cached.alt_night_color = AltNightFontColor.get()
     recomputeFGColor()
     refresh()
 end
