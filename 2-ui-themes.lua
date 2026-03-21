@@ -450,7 +450,9 @@ end
 -- Shown when holding down on a theme in the theme list
 edit_menu = function(touchmenu_instance, theme, updialog_ref)
     local function refreshThemeButtons()
+        local scrolled_offset = 0
         if updialog_ref.dialog then
+            scrolled_offset = updialog_ref.dialog:getScrolledOffset()
             UIManager:close(updialog_ref.dialog)
         end
         local new_ref = {}
@@ -467,6 +469,7 @@ edit_menu = function(touchmenu_instance, theme, updialog_ref)
             dithered = true,
             rows_per_page = 10,
         }
+        new_updialog:setScrolledOffset(scrolled_offset)
         new_ref.dialog = new_updialog
         updialog_ref.dialog = new_updialog -- Update the ref so future calls are correct
         UIManager:show(new_updialog)
