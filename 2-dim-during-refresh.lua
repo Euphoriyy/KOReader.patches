@@ -56,6 +56,17 @@ local function has_document_open()
     return ReaderUI.instance ~= nil and ReaderUI.instance.document ~= nil
 end
 
+-- Helper: get the current page number
+local function get_current_page()
+    local ui = ReaderUI.instance
+    if ui.paging then
+        return ui.paging.current_page
+    elseif ui.rolling then
+        return ui.document:getPageFromXPointer(ui.document:getXPointer())
+    end
+    return nil
+end
+
 -- Helper: check if there are any highlights on the current page
 local function has_highlights()
     if not has_document_open() then
@@ -64,9 +75,27 @@ local function has_highlights()
 
     -- Check for highlights after changing pages
     local old_page = current_page
-    current_page = ReaderUI.instance.paging.current_page
-    return old_page and current_page ~= old_page and
-        #ReaderUI.instance.highlight:getPageSavedHighlights(current_page) > 0
+    current_page = get_current_page()
+    if old_page == nil or current_page == nil or old_page == current_page then
+        return false
+    end
+
+    -- Check for highlights in both reflowable & fixed documents
+    local ui = ReaderUI.instance
+    if ui.rolling then
+        local doc = ui.document
+        for _, highlight in ipairs(ui.annotation.annotations) do
+            if highlight.drawer then
+                local start_page = doc:getPageFromXPointer(highlight.pos0)
+                local end_page = doc:getPageFromXPointer(highlight.pos1)
+                if start_page <= current_page and current_page <= end_page then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+    return #ui.highlight:getPageSavedHighlights(current_page) > 0
 end
 
 -- Helper: check if this is a flashing refresh
