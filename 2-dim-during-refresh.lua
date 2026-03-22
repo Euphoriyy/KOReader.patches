@@ -219,7 +219,7 @@ local function set_menu(self, menu_items)
         text = _("Dim frontlight on refreshes"),
         sub_item_table = {
             {
-                text = _("Enable dimming on refreshes"),
+                text = _("Enable dimming on refreshes in night mode"),
                 checked_func = EnableFrontlightRefresh.get,
                 callback = function()
                     EnableFrontlightRefresh.toggle()
@@ -310,7 +310,7 @@ end
 function ReaderMenu:setUpdateItemTable()
     -- Add main menu entry with submenu
     local order = ReaderMenuOrder.screen
-    table.insert(order, 8, "frontlight_refresh")
+    table.insert(order, 9, "frontlight_refresh")
 
     set_menu(self, self.menu_items)
     original_readermenu_setUpdateItemTable(self)
