@@ -3,7 +3,7 @@
 Useful patches for KOReader that I have either compiled, edited, or created myself.
 
 ### [🞂 2-dim-during-refresh.lua](2-dim-during-refresh.lua)
-This patch lowers the brightness during refreshes in night mode to prevent bright flashes.
+This patch lowers the brightness during refreshes in night mode to prevent bright flashes on e-ink.
 Based on [this post by LexamusPrime](https://www.reddit.com/r/koreader/comments/1q9g37j/keep_dark_mode_dark).
 
 It can be configured under **🞂 Screen 🞂 Dim frontlight on refreshes** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.

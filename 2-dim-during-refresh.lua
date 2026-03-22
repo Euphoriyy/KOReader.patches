@@ -1,5 +1,5 @@
 --[[
-    This user patch dims the frontlight during refreshes in night mode to prevent bright flashes.
+    This user patch dims the frontlight during refreshes in night mode to prevent bright flashes on e-ink.
     It has the following menu options:
         - A toggle to enable dimming.
         - A toggle to force dimming every page turn/refresh.
@@ -173,7 +173,7 @@ function UIManager._refresh(self, refresh_mode, region, dither)
     -- Save & disable frontlight before refresh
     local intensity = Device.powerd.fl_intensity
 
-    if not dimmed and intensity > DimLevel.get() then
+    if intensity and not dimmed and intensity > DimLevel.get() then
         if RelativeDimFrontlightRefresh.get() then
             Device.powerd:setIntensity(intensity - DimLevel.get())
         else
