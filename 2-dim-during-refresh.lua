@@ -124,7 +124,7 @@ local function is_flashing_refresh(refresh_mode, region, FULL_REFRESH_COUNT, ref
 
     return (ForceFrontlightRefresh.get() and refresh_mode == "partial") or
         (UIFrontlightRefresh.get() and ((refresh_mode == "ui" and not region) or refresh_mode == "flashui")) or
-        (Device:hasKaleidoWfm() and has_highlights())
+        (Device:hasKaleidoWfm() and Screen:isColorEnabled() and has_highlights())
 end
 
 -- Hook into UIManager quit to prevent frontlight dimming on quit
