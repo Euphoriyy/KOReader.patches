@@ -26,6 +26,7 @@ local IconWidget = require("ui/widget/iconwidget")
 local ImageWidget = require("ui/widget/imagewidget")
 local InputText = require("ui/widget/inputtext")
 local LineWidget = require("ui/widget/linewidget")
+local ProgressWidget = require("ui/widget/progresswidget")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
 local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
 local ReaderUI = require("apps/reader/readerui")
@@ -1294,6 +1295,17 @@ function ButtonTable:init()
             end
         end
     end
+end
+
+-- Add background, fill, and border colors to ProgressWidget painting method
+local original_ProgressWidget_paintTo = ProgressWidget.paintTo
+
+function ProgressWidget:paintTo(bb, x, y)
+    self.bgcolor = bg_cached.bgcolor
+    self.fillcolor = bg_cached.bgcolor:invert()
+    self.bordercolor = bg_cached.fgcolor
+
+    original_ProgressWidget_paintTo(self, bb, x, y)
 end
 
 -- Change the background color for the reader sides & page gaps
