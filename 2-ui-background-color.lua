@@ -14,6 +14,7 @@
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("ui/widget/button")
+local ButtonProgressWidget = require("ui/widget/buttonprogresswidget")
 local ButtonTable = require("ui/widget/buttontable")
 local Cache = require("cache")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
@@ -1306,6 +1307,22 @@ function ProgressWidget:paintTo(bb, x, y)
     self.bordercolor = bg_cached.fgcolor
 
     original_ProgressWidget_paintTo(self, bb, x, y)
+end
+
+-- Change the highlighted color of the button progress widget
+local original_ButtonProgressWidget_update = ButtonProgressWidget.update
+
+function ButtonProgressWidget:update()
+    original_ButtonProgressWidget_update(self)
+
+    for i, button in ipairs(self.buttonprogress_content) do
+        local highlighted = i <= self.position
+        if highlighted then
+            -- The button and its frame background will be inverted,
+            -- so invert the color we want so it gets inverted back
+            button[1].frame.background = bg_cached.bgcolor
+        end
+    end
 end
 
 -- Change the background color for the reader sides & page gaps
