@@ -571,7 +571,6 @@ end
 
 -- Hook into FrameContainer painting (responsible for 80% of background)
 local original_FrameContainer_paintTo = FrameContainer.paintTo
-
 function FrameContainer:paintTo(bb, x, y)
     local original_background = self.background
     local original_color = self.color
@@ -592,7 +591,6 @@ end
 
 -- Exclude footer background color changes if option is not set
 local original_ReaderFooter_updateFooterContainer = ReaderFooter.updateFooterContainer
-
 function ReaderFooter:updateFooterContainer()
     original_ReaderFooter_updateFooterContainer(self)
 
@@ -603,7 +601,6 @@ end
 
 -- Exclude ScreenSaverWidget from background color changes
 local original_ScreenSaverWidget_init = ScreenSaverWidget.init
-
 function ScreenSaverWidget:init()
     original_ScreenSaverWidget_init(self)
 
@@ -915,7 +912,6 @@ end
 
 -- Hook into night mode state changes and update cache
 local original_UIManager_ToggleNightMode = UIManager.ToggleNightMode
-
 function UIManager:ToggleNightMode()
     original_UIManager_ToggleNightMode(self)
 
@@ -936,7 +932,6 @@ function UIManager:ToggleNightMode()
 end
 
 local original_UIManager_SetNightMode = UIManager.SetNightMode
-
 function UIManager:SetNightMode(night_mode)
     original_UIManager_SetNightMode(self)
 
@@ -995,7 +990,6 @@ end
 
 -- Hook into TextBoxWidget text rendering
 local original_TextBoxWidget_renderText = TextBoxWidget._renderText
-
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
     local original_bgcolor = self.bgcolor
 
@@ -1045,7 +1039,6 @@ end
 
 -- Adjust InputText frame color to match background
 local original_InputText_initTextBox = InputText.initTextBox
-
 function InputText:initTextBox(text, char_added)
     original_InputText_initTextBox(self, text, char_added)
 
@@ -1073,7 +1066,6 @@ end
 
 -- Hook into HTMLBoxWidget rendering (DictQuickLookup) to add "flashui" refreshes to prevent ghosting
 local original_HtmlBoxWidget_render = HtmlBoxWidget._render
-
 function HtmlBoxWidget:_render()
     original_HtmlBoxWidget_render(self)
 
@@ -1088,7 +1080,6 @@ end
 
 -- Add background color CSS to HTML dictionary
 local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDictionaryCss
-
 function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
@@ -1155,7 +1146,6 @@ end
 
 -- Add background color to reader style tweak CSS if enabled
 local original_ReaderStyleTweak_getCssText = ReaderStyleTweak.getCssText
-
 function ReaderStyleTweak:getCssText()
     local original_css = original_ReaderStyleTweak_getCssText(self)
 
@@ -1179,10 +1169,9 @@ function ReaderStyleTweak:getCssText()
 end
 
 -- Restore virtual keyboard key border with appropriate color
-local original_VirtualKeyboard_addKeys = VirtualKeyboard.addKeys
-
 local MIN_KEY_BORDER_CONTRAST = 5
 
+local original_VirtualKeyboard_addKeys = VirtualKeyboard.addKeys
 function VirtualKeyboard:addKeys()
     original_VirtualKeyboard_addKeys(self)
 
@@ -1283,7 +1272,6 @@ end)
 
 -- Propagate original_background from the button table entries to each button's FrameContainer
 local original_ButtonTable_init = ButtonTable.init
-
 function ButtonTable:init()
     original_ButtonTable_init(self)
 
@@ -1299,7 +1287,6 @@ end
 
 -- Add background, fill, and border colors to ProgressWidget painting method
 local original_ProgressWidget_paintTo = ProgressWidget.paintTo
-
 function ProgressWidget:paintTo(bb, x, y)
     self.bgcolor = bg_cached.bgcolor
     self.fillcolor = bg_cached.bgcolor:invert()
@@ -1310,7 +1297,6 @@ end
 
 -- Change the highlighted color of the button progress widget
 local original_ButtonProgressWidget_update = ButtonProgressWidget.update
-
 function ButtonProgressWidget:update()
     original_ButtonProgressWidget_update(self)
 
@@ -1362,7 +1348,6 @@ end
 
 -- Event handlers for when a theme is applied
 local original_FileManager_onApplyTheme = FileManager.onApplyTheme
-
 function FileManager:onApplyTheme()
     if original_FileManager_onApplyTheme then
         original_FileManager_onApplyTheme(self)
@@ -1376,7 +1361,6 @@ function FileManager:onApplyTheme()
 end
 
 local original_ReaderUI_onApplyTheme = ReaderUI.onApplyTheme
-
 function ReaderUI:onApplyTheme()
     if original_ReaderUI_onApplyTheme then
         original_ReaderUI_onApplyTheme(self)

@@ -156,7 +156,6 @@ local function hexToHSV(hex)
 end
 
 local original_init = ReaderFooter.init
-
 function ReaderFooter:init()
     Settings:init(self)
     original_init(self)
@@ -206,7 +205,6 @@ function ReaderFooter:onSetNightMode(night_mode)
 end
 
 local original_loadPreset = ReaderFooter.loadPreset
-
 function ReaderFooter:loadPreset(preset)
     original_loadPreset(self, preset)
     self.progress_bar:_setColors(self.settings.progress_style_thin)
@@ -242,7 +240,6 @@ function ProgressWidget:_setColors(thin)
 end
 
 local orig_ProgressWidget_updateStyle = ProgressWidget.updateStyle
-
 function ProgressWidget:updateStyle(thick, height, do_setcolors)
     do_setcolors = do_setcolors or do_setcolors == nil -- default: do_setcolors = trues
     orig_ProgressWidget_updateStyle(self, thick, height)
@@ -421,7 +418,6 @@ function ReaderFooter:_invertColorMenu(read)
 end
 
 local original_ReaderFooter_addToMainMenu = ReaderFooter.addToMainMenu
-
 function ReaderFooter:addToMainMenu(menu_items)
     original_ReaderFooter_addToMainMenu(self, menu_items)
 

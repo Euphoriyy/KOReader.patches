@@ -128,36 +128,32 @@ local function is_flashing_refresh(refresh_mode, region, FULL_REFRESH_COUNT, ref
 end
 
 -- Hook into UIManager quit to prevent frontlight dimming on quit
-local original_uimanager_quit = UIManager.quit
-
+local original_UIManager_quit = UIManager.quit
 function UIManager.quit(self, exit_code, implicit)
     patch_active = false
 
     UIManager:scheduleIn(0.02, function()
-        return original_uimanager_quit(self, exit_code, implicit)
+        return original_UIManager_quit(self, exit_code, implicit)
     end)
 end
 
 -- Hook into Screensaver & ScreenSaverWidget to prevent the patch from dimming the screensaver when screensaver_delay is set
-local original_screensaver_show = Screensaver.show
-
+local original_Screensaver_show = Screensaver.show
 function Screensaver.show(self)
     patch_active = false
 
-    original_screensaver_show(self)
+    original_Screensaver_show(self)
 end
 
-local original_screensaverwidget_onCloseWidget = ScreenSaverWidget.onCloseWidget
-
+local original_ScreensaverWidget_onCloseWidget = ScreenSaverWidget.onCloseWidget
 function ScreenSaverWidget.onCloseWidget()
-    original_screensaverwidget_onCloseWidget()
+    original_ScreensaverWidget_onCloseWidget()
 
     patch_active = true
 end
 
 -- Hook into the refresh function
 local original_refresh = UIManager._refresh
-
 function UIManager._refresh(self, refresh_mode, region, dither)
     -- Only act if not currently restoring, the patch is active, in night mode, a document is open, and it's a full refresh
     if not EnableFrontlightRefresh.get() or restoring or not patch_active or not Screen.night_mode or
@@ -210,9 +206,6 @@ local FileManagerMenuOrder = require("ui/elements/filemanager_menu_order")
 local SpinWidget = require("ui/widget/spinwidget")
 local _ = require("gettext")
 local T = require("ffi/util").template
-
-local original_readermenu_setUpdateItemTable = ReaderMenu.setUpdateItemTable
-local original_filemanagermenu_setUpdateItemTable = FileManagerMenu.setUpdateItemTable
 
 local function set_menu(self, menu_items)
     menu_items.frontlight_refresh = {
@@ -307,22 +300,24 @@ local function set_menu(self, menu_items)
     }
 end
 
+local original_ReaderMenu_setUpdateItemTable = ReaderMenu.setUpdateItemTable
 function ReaderMenu:setUpdateItemTable()
     -- Add main menu entry with submenu
     local order = ReaderMenuOrder.screen
     table.insert(order, 9, "frontlight_refresh")
 
     set_menu(self, self.menu_items)
-    original_readermenu_setUpdateItemTable(self)
+    original_ReaderMenu_setUpdateItemTable(self)
 end
 
+local original_FileManagerMenu_setUpdateItemTable = FileManagerMenu.setUpdateItemTable
 function FileManagerMenu:setUpdateItemTable()
     -- Add main menu entry with submenu
     local order = FileManagerMenuOrder.screen
     table.insert(order, 8, "frontlight_refresh")
 
     set_menu(self, self.menu_items)
-    original_filemanagermenu_setUpdateItemTable(self)
+    original_FileManagerMenu_setUpdateItemTable(self)
 end
 
 -- Toggle action events

@@ -28,9 +28,8 @@ for __, section in ipairs(KoptOptions) do
     end
 end
 
-local original_ReaderConfig_init = ReaderConfig.init
-
 -- Load new option
+local original_ReaderConfig_init = ReaderConfig.init
 function ReaderConfig:init()
     original_ReaderConfig_init(self)
 

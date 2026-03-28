@@ -495,7 +495,6 @@ end
 
 -- Hook into night mode state changes and update cache
 local original_UIManager_ToggleNightMode = UIManager.ToggleNightMode
-
 function UIManager:ToggleNightMode()
     original_UIManager_ToggleNightMode(self)
 
@@ -514,7 +513,6 @@ function UIManager:ToggleNightMode()
 end
 
 local original_UIManager_SetNightMode = UIManager.SetNightMode
-
 function UIManager:SetNightMode(night_mode)
     original_UIManager_SetNightMode(self)
 
@@ -776,7 +774,6 @@ end
 
 -- Hook into TextWidget painting
 local original_TextWidget_paintTo = TextWidget.paintTo
-
 function TextWidget:paintTo(bb, x, y)
     local original_fgcolor = self.fgcolor
 
@@ -880,7 +877,6 @@ end
 
 -- Hook into TextBoxWidget text rendering
 local original_TextBoxWidget_renderText = TextBoxWidget._renderText
-
 function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
     local original_fgcolor = self.fgcolor
 
@@ -895,7 +891,6 @@ end
 
 -- Add font color CSS to HTML dictionary
 local original_DictQuickLookup_getHtmlDictionaryCss = DictQuickLookup.getHtmlDictionaryCss
-
 function DictQuickLookup:getHtmlDictionaryCss()
     local original_css = original_DictQuickLookup_getHtmlDictionaryCss(self)
 
@@ -920,7 +915,6 @@ end
 
 -- Add font color to reader style tweak CSS if enabled
 local original_ReaderStyleTweak_getCssText = ReaderStyleTweak.getCssText
-
 function ReaderStyleTweak:getCssText()
     local original_css = original_ReaderStyleTweak_getCssText(self)
 
@@ -967,7 +961,6 @@ end)
 
 -- Event handlers for when a theme is applied
 local original_FileManager_onApplyTheme = FileManager.onApplyTheme
-
 function FileManager:onApplyTheme()
     if original_FileManager_onApplyTheme then
         original_FileManager_onApplyTheme(self)
@@ -981,7 +974,6 @@ function FileManager:onApplyTheme()
 end
 
 local original_ReaderUI_onApplyTheme = ReaderUI.onApplyTheme
-
 function ReaderUI:onApplyTheme()
     if original_ReaderUI_onApplyTheme then
         original_ReaderUI_onApplyTheme(self)
