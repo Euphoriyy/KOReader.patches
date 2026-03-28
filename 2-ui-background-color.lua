@@ -1320,7 +1320,9 @@ function ButtonProgressWidget:update()
         if highlighted then
             -- The button and its frame background will be inverted,
             -- so invert the color we want so it gets inverted back
-            button[1].frame.background = bg_cached.bgcolor
+            if button[1] and button[1].frame then
+                button[1].frame.background = bg_cached.bgcolor
+            end
         end
     end
 end
