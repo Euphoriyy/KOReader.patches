@@ -1137,10 +1137,9 @@ end
 -- Change button inversion color for visual feedback
 function Button:_doFeedbackHighlight()
     if self.text then
-        if self[1].radius == nil then
+        if self[1].radius == nil or self.background then
             self[1].radius = Size.radius.button
-            self[1].original_background = bg_cached.bgcolor:invert()
-            self[1].background = EXCLUSION_COLOR
+            self[1].background = bg_cached.bgcolor:invert()
             self.label_widget.fgcolor = self.label_widget.fgcolor:invert()
         else
             self[1].invert = true
