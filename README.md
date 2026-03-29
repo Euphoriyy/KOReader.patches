@@ -112,6 +112,30 @@ Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing 
 
 <img src="img/ui-background-color-2.png" style="width:80%; height:auto;">
 
+### [🞂 2-ui-background-image.lua](2-ui-background-image.lua)
+This patch adds the ability to set a background image for the KOReader UI.
+
+It is most recommended for non-e-ink devices for visiblity and refresh clarity, but it works fine on e-ink as well. It is also best used together with [2-ui-background-color.lua](#-2-ui-background-colorlua) & [2-ui-font-color.lua](#-2-ui-font-colorlua) for UI refinement and transparent icons.
+
+It can be configured under **🞂 Appearance 🞂 Background image:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+
+Aside from the image, it has options for:
+- Stretching the image to fit the screen.
+- Automatically rotating the image for the best fit.
+- Inverting the image in night mode.
+- Showing in the file browser.
+- Showing in the reader behind your pages.
+- Showing in the top menu.
+
+> *In the File Browser*
+<img src="img/ui-background-image-1.png" style="width:80%; height:auto;">
+
+> *In the Reader*
+<img src="img/ui-background-image-2.png" style="width:80%; height:auto;">
+
+> *In the Top Menu*
+<img src="img/ui-background-image-3.png" style="width:80%; height:auto;">
+
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
 
 > [!WARNING]
