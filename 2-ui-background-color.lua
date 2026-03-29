@@ -59,20 +59,20 @@ local function Setting(name, default)
 end
 
 -- Settings
-local HexBackgroundColor = Setting("ui_background_color_hex", "#FFFFFF")             -- RGB hex for UI background color (default: #FFFFFF)
-local InvertBackgroundColor = Setting("ui_background_color_inverted", true)          -- Whether the UI background color should be inverted in night mode (default: true)
-local AltNightBackgroundColor = Setting("ui_background_color_alt_night", false)      -- Whether the UI background color should be changed to an alternative color in night mode (default: false)
-local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#000000")  -- RGB hex for the alternative UI background color in night mode (default: #000000)
-local InvertIcons = Setting("ui_background_color_invert_icons", true)                -- Whether icons should be inverted when an alternative night mode color is set
-local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)          -- Whether the background color of TextBoxWidgets should be changed (default: true)
-local PageBackgroundColor = Setting("ui_background_color_reader_page", false)        -- Whether the background color of the page should be changed (default: false)
-local DocumentBackgroundColor = Setting("ui_background_color_reader_doc", false)     -- Whether the background color of the document should be changed (default: false)
-local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false)    -- Whether the background color of the ReaderFooter should be changed (default: false)
-local SidesBackgroundColor = Setting("ui_background_color_reader_sides", false)      -- Whether the background color of the reader sides should be changed (default: false)
-local GapBackgroundColor = Setting("ui_background_color_reader_gap", false)          -- Whether the background color of the page gap should be changed (default: false)
-local TransparentIcons = Setting("ui_background_color_transparent_icons", false)     -- Whether icons should be fully transparent (default: false)
-local TransparentButtons = Setting("ui_background_color_transparent_buttons", false) -- Whether buttons should be fully transparent (default: false)
-local TransparentFooter = Setting("ui_background_color_transparent_footer", false)   -- Whether the ReaderFooter should be fully transparent (default: false)
+local HexBackgroundColor = Setting("ui_background_color_hex", "#FFFFFF")                  -- RGB hex for UI background color (default: #FFFFFF)
+local InvertBackgroundColor = Setting("ui_background_color_inverted", true)               -- Whether the UI background color should be inverted in night mode (default: true)
+local AltNightBackgroundColor = Setting("ui_background_color_alt_night", false)           -- Whether the UI background color should be changed to an alternative color in night mode (default: false)
+local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#000000")       -- RGB hex for the alternative UI background color in night mode (default: #000000)
+local InvertIcons = Setting("ui_background_color_invert_icons", true)                     -- Whether icons should be inverted when an alternative night mode color is set
+local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)               -- Whether the background color of TextBoxWidgets should be changed (default: true)
+local ReflowableBackgroundColor = Setting("ui_background_color_reader_reflowable", false) -- Whether the background color of reflowable pages should be changed (default: false)
+local FixedBackgroundColor = Setting("ui_background_color_reader_fixed", false)           -- Whether the background color of fixed pages should be changed (default: false)
+local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false)         -- Whether the background color of the ReaderFooter should be changed (default: false)
+local SidesBackgroundColor = Setting("ui_background_color_reader_sides", false)           -- Whether the background color of the reader sides should be changed (default: false)
+local GapBackgroundColor = Setting("ui_background_color_reader_gap", false)               -- Whether the background color of the page gap should be changed (default: false)
+local TransparentIcons = Setting("ui_background_color_transparent_icons", false)          -- Whether icons should be fully transparent (default: false)
+local TransparentButtons = Setting("ui_background_color_transparent_buttons", false)      -- Whether buttons should be fully transparent (default: false)
+local TransparentFooter = Setting("ui_background_color_transparent_footer", false)        -- Whether the ReaderFooter should be fully transparent (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -204,8 +204,8 @@ local bg_cached = {
     invert_in_night_mode = InvertBackgroundColor.get(),
     invert_icons_in_night_mode = InvertIcons.get(),
     set_textbox_color = TextBoxBackgroundColor.get(),
-    set_page_color = PageBackgroundColor.get(),
-    set_doc_color = DocumentBackgroundColor.get(),
+    set_reflowable_color = ReflowableBackgroundColor.get(),
+    set_fixed_color = FixedBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
     set_sides_color = SidesBackgroundColor.get(),
     set_gap_color = GapBackgroundColor.get(),
@@ -290,7 +290,7 @@ local function refresh()
     reloadIcons()
 
     -- Reapply page CSS
-    if bg_cached.set_page_color and has_document_open() then
+    if bg_cached.set_reflowable_color and has_document_open() then
         UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
     end
 end
@@ -424,7 +424,7 @@ local function background_color_menu()
                             refreshFileManager()
                         end
 
-                        if bg_cached.set_page_color and has_document_open() then
+                        if bg_cached.set_reflowable_color and has_document_open() then
                             UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
                         end
                     end
@@ -461,7 +461,7 @@ local function background_color_menu()
                             refreshFileManager()
                         end
 
-                        if bg_cached.set_page_color and has_document_open() then
+                        if bg_cached.set_reflowable_color and has_document_open() then
                             UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
                         end
                     end
@@ -483,10 +483,10 @@ local function background_color_menu()
 
             table.insert(items, {
                 text = _("Apply to reader pages (epub, html, fb2, txt...)"),
-                checked_func = PageBackgroundColor.get,
+                checked_func = ReflowableBackgroundColor.get,
                 callback = function()
-                    PageBackgroundColor.toggle()
-                    bg_cached.set_page_color = PageBackgroundColor.get()
+                    ReflowableBackgroundColor.toggle()
+                    bg_cached.set_reflowable_color = ReflowableBackgroundColor.get()
 
                     if has_document_open() then
                         UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
@@ -496,10 +496,10 @@ local function background_color_menu()
 
             table.insert(items, {
                 text = _("Apply to reader pages (pdf, djvu, cbz...)"),
-                checked_func = DocumentBackgroundColor.get,
+                checked_func = FixedBackgroundColor.get,
                 callback = function()
-                    DocumentBackgroundColor.toggle()
-                    bg_cached.set_doc_color = DocumentBackgroundColor.get()
+                    FixedBackgroundColor.toggle()
+                    bg_cached.set_fixed_color = FixedBackgroundColor.get()
                 end,
             })
 
@@ -987,7 +987,7 @@ function UIManager:ToggleNightMode()
 
         ImageCache:clear()
 
-        if bg_cached.set_page_color and has_document_open() then
+        if bg_cached.set_reflowable_color and has_document_open() then
             UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
         end
     end
@@ -1007,7 +1007,7 @@ function UIManager:SetNightMode(night_mode)
 
             ImageCache:clear()
 
-            if bg_cached.set_page_color and has_document_open() then
+            if bg_cached.set_reflowable_color and has_document_open() then
                 UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
             end
         end
@@ -1211,7 +1211,7 @@ local original_ReaderStyleTweak_getCssText = ReaderStyleTweak.getCssText
 function ReaderStyleTweak:getCssText()
     local original_css = original_ReaderStyleTweak_getCssText(self)
 
-    if bg_cached.set_page_color then
+    if bg_cached.set_reflowable_color then
         local bg_hex = (Screen.night_mode and bg_cached.alt_night_color) and bg_cached.night_hex or bg_cached.hex
         if Screen.night_mode then
             if bg_cached.alt_night_color or not bg_cached.invert_in_night_mode then
@@ -1434,7 +1434,7 @@ local original_Document_drawPage = Document.drawPage
 function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
     original_Document_drawPage(self, target, x, y, rect, pageno, zoom, rotation, gamma)
 
-    if not bg_cached.set_doc_color then
+    if not bg_cached.set_fixed_color then
         return
     end
 
@@ -1461,7 +1461,7 @@ end
 -- Use the day mode bgcolor instead of the one for night mode
 local original_Document_drawPageInverted = Document.drawPageInverted
 function Document:drawPageInverted(target, x, y, rect, pageno, zoom, rotation, gamma)
-    if not bg_cached.set_doc_color then
+    if not bg_cached.set_fixed_color then
         original_Document_drawPageInverted(self, target, x, y, rect, pageno, zoom, rotation, gamma)
         return
     end
@@ -1487,7 +1487,7 @@ end
 -- Finally, add background color to context pages.
 local original_KoptInterface_drawContextPage = KoptInterface.drawContextPage
 function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
-    if not bg_cached.set_doc_color then
+    if not bg_cached.set_fixed_color then
         original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
         return
     end
