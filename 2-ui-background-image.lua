@@ -137,8 +137,10 @@ local function background_image_menu()
             local items = {
                 {
                     text_func = function()
-                        return T(_("Current image: %1"),
-                            BackgroundImage.get() and (backgroundImageName() .. " (hold to unset)") or "none")
+                        local status = BackgroundImage.get()
+                            and (backgroundImageName() .. " (hold to unset)")
+                            or "none (press to select)"
+                        return T(_("Current image: %1"), status)
                     end,
                     callback = function(touchmenu_instance)
                         local title_header, current_path, file_filter, caller_callback
@@ -152,7 +154,9 @@ local function background_image_menu()
                             touchmenu_instance:updateItems()
                             reload_background_image()
                         end
-                        filemanagerutil.showChooseDialog(title_header, caller_callback, current_path, nil, file_filter)
+                        filemanagerutil.showChooseDialog(
+                            title_header, caller_callback, current_path, nil, file_filter
+                        )
                     end,
                     hold_callback = function(touchmenu_instance)
                         BackgroundImage.set(nil)
