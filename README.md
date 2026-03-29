@@ -102,6 +102,9 @@ Besides the color, it has options for:
 - A toggle for the reader footer.
 - A toggle for the reader sides.
 - A toggle for the page gaps.
+- A toggle for making icons fully transparent.
+- A toggle for making buttons fully transparent.
+- A toggle for making the reader footer fully transparent.
 
 Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
 

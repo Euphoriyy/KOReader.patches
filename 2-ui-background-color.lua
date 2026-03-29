@@ -59,12 +59,15 @@ local HexBackgroundColor = Setting("ui_background_color_hex", "#FFFFFF")        
 local InvertBackgroundColor = Setting("ui_background_color_inverted", true)          -- Whether the UI background color should be inverted in night mode (default: true)
 local AltNightBackgroundColor = Setting("ui_background_color_alt_night", false)      -- Whether the UI background color should be changed to an alternative color in night mode (default: false)
 local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#000000")  -- RGB hex for the alternative UI background color in night mode (default: #000000)
-local InvertIconsBackgroundColor = Setting("ui_background_color_invert_icons", true) -- Whether icons should be inverted when an alternative night mode color is set
+local InvertIcons = Setting("ui_background_color_invert_icons", true)                -- Whether icons should be inverted when an alternative night mode color is set
 local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)          -- Whether the background color of TextBoxWidgets should be changed (default: true)
 local PageBackgroundColor = Setting("ui_background_color_reader_page", false)        -- Whether the background color of the page should be changed (default: false)
 local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false)    -- Whether the background color of the ReaderFooter should be changed (default: false)
 local SidesBackgroundColor = Setting("ui_background_color_reader_sides", false)      -- Whether the background color of the reader sides should be changed (default: false)
 local GapBackgroundColor = Setting("ui_background_color_reader_gap", false)          -- Whether the background color of the page gap should be changed (default: false)
+local TransparentIcons = Setting("ui_background_color_transparent_icons", false)     -- Whether icons should be fully transparent (default: false)
+local TransparentButtons = Setting("ui_background_color_transparent_buttons", false) -- Whether buttons should be fully transparent (default: false)
+local TransparentFooter = Setting("ui_background_color_transparent_footer", false)   -- Whether the ReaderFooter should be fully transparent (default: false)
 
 -- Helper: invert a hex color string "#RRGGBB" → "#(FF-R)(FF-G)(FF-B)"
 local function invertColor(hex)
@@ -194,12 +197,15 @@ local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
 local bg_cached = {
     alt_night_color = AltNightBackgroundColor.get(),
     invert_in_night_mode = InvertBackgroundColor.get(),
-    invert_icons_in_night_mode = InvertIconsBackgroundColor.get(),
+    invert_icons_in_night_mode = InvertIcons.get(),
     set_textbox_color = TextBoxBackgroundColor.get(),
     set_page_color = PageBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
     set_sides_color = SidesBackgroundColor.get(),
     set_gap_color = GapBackgroundColor.get(),
+    transparent_icons = TransparentIcons.get(),
+    transparent_buttons = TransparentButtons.get(),
+    transparent_footer = TransparentFooter.get(),
     hex = HexBackgroundColor.get(),
     night_hex = NightHexBackgroundColor.get(),
     last_hex = nil,
@@ -422,10 +428,10 @@ local function background_color_menu()
             table.insert(items, {
                 text = _("Invert icons in night mode"),
                 enabled_func = function() return AltNightBackgroundColor.get() end,
-                checked_func = InvertIconsBackgroundColor.get,
+                checked_func = InvertIcons.get,
                 callback = function()
-                    InvertIconsBackgroundColor.toggle()
-                    bg_cached.invert_icons_in_night_mode = InvertIconsBackgroundColor.get()
+                    InvertIcons.toggle()
+                    bg_cached.invert_icons_in_night_mode = InvertIcons.get()
 
                     if Screen.night_mode then
                         reloadIcons()
@@ -511,6 +517,43 @@ local function background_color_menu()
                     GapBackgroundColor.toggle()
                     bg_cached.set_gap_color = GapBackgroundColor.get()
                 end,
+                separator = true,
+            })
+
+            table.insert(items, {
+                text = _("Make icons transparent"),
+                checked_func = TransparentIcons.get,
+                callback = function()
+                    TransparentIcons.toggle()
+                    bg_cached.transparent_icons = TransparentIcons.get()
+
+                    reloadIcons()
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Make buttons transparent"),
+                checked_func = TransparentButtons.get,
+                callback = function()
+                    TransparentButtons.toggle()
+                    bg_cached.transparent_buttons = TransparentButtons.get()
+
+                    UIManager:askForRestart()
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Make the reader footer transparent"),
+                enabled_func = function() return not FooterBackgroundColor.get() end,
+                checked_func = TransparentFooter.get,
+                callback = function()
+                    TransparentFooter.toggle()
+                    bg_cached.transparent_footer = TransparentFooter.get()
+
+                    if has_document_open() then
+                        UIManager:broadcastEvent(Event:new("RefreshFooterBackground"))
+                    end
+                end,
             })
             return items
         end,
@@ -595,7 +638,11 @@ function ReaderFooter:updateFooterContainer()
     original_ReaderFooter_updateFooterContainer(self)
 
     if not bg_cached.set_footer_color then
-        self.footer_content.background = EXCLUSION_COLOR
+        if bg_cached.transparent_footer then
+            self.footer_content.background = nil
+        else
+            self.footer_content.background = EXCLUSION_COLOR
+        end
     end
 end
 
@@ -1344,6 +1391,27 @@ function ReaderView:drawPageGap(bb, x, y)
         x, y, self.dimen.w, self.page_gap.height,
         bg_cached.set_gap_color and bg_cached.bgcolor or self.page_gap.color
     )
+end
+
+-- Set icon widgets to be transparent after initialization
+local original_IconWidget_init = IconWidget.init
+function IconWidget:init()
+    original_IconWidget_init(self)
+
+    if bg_cached.transparent_icons then
+        self.alpha = true
+        self.original_in_nightmode = false
+    end
+end
+
+-- Set buttons to be transparent after initialization
+local original_Button_init = Button.init
+function Button:init()
+    original_Button_init(self)
+
+    if bg_cached.transparent_buttons then
+        self[1].background = nil
+    end
 end
 
 -- Event handlers for when a theme is applied
