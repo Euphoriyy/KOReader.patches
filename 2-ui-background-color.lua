@@ -5,6 +5,7 @@
         - A toggle to invert it in night mode.
         - A toggle for affecting TextBoxWidgets.
         - A toggle for changing the page background color (epub, html, fb2, txt...).
+        - A toggle for changing the page background color (pdf, djvu, cbz...).
         - A toggle for affecting the ReaderFooter.
         - A toggle for affecting the reader sides.
         - A toggle for affecting the page gaps.
@@ -17,7 +18,9 @@ local Button = require("ui/widget/button")
 local ButtonProgressWidget = require("ui/widget/buttonprogresswidget")
 local ButtonTable = require("ui/widget/buttontable")
 local Cache = require("cache")
+local Device = require("device")
 local DictQuickLookup = require("ui/widget/dictquicklookup")
+local Document = require("document/document")
 local Event = require("ui/event")
 local FileManager = require("apps/filemanager/filemanager")
 local FrameContainer = require("ui/widget/container/framecontainer")
@@ -26,6 +29,7 @@ local HtmlBoxWidget = require("ui/widget/htmlboxwidget")
 local IconWidget = require("ui/widget/iconwidget")
 local ImageWidget = require("ui/widget/imagewidget")
 local InputText = require("ui/widget/inputtext")
+local KoptInterface = require("document/koptinterface")
 local LineWidget = require("ui/widget/linewidget")
 local ProgressWidget = require("ui/widget/progresswidget")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
@@ -33,7 +37,7 @@ local ReaderStyleTweak = require("apps/reader/modules/readerstyletweak")
 local ReaderUI = require("apps/reader/readerui")
 local ReaderView = require("apps/reader/modules/readerview")
 local RenderImage = require("ui/renderimage")
-local Screen = require("device").screen
+local Screen = Device.screen
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
 local Size = require("ui/size")
 local TextBoxWidget = require("ui/widget/textboxwidget")
@@ -62,6 +66,7 @@ local NightHexBackgroundColor = Setting("ui_background_color_night_hex", "#00000
 local InvertIcons = Setting("ui_background_color_invert_icons", true)                -- Whether icons should be inverted when an alternative night mode color is set
 local TextBoxBackgroundColor = Setting("ui_background_color_textbox", true)          -- Whether the background color of TextBoxWidgets should be changed (default: true)
 local PageBackgroundColor = Setting("ui_background_color_reader_page", false)        -- Whether the background color of the page should be changed (default: false)
+local DocumentBackgroundColor = Setting("ui_background_color_reader_doc", false)     -- Whether the background color of the document should be changed (default: false)
 local FooterBackgroundColor = Setting("ui_background_color_reader_footer", false)    -- Whether the background color of the ReaderFooter should be changed (default: false)
 local SidesBackgroundColor = Setting("ui_background_color_reader_sides", false)      -- Whether the background color of the reader sides should be changed (default: false)
 local GapBackgroundColor = Setting("ui_background_color_reader_gap", false)          -- Whether the background color of the page gap should be changed (default: false)
@@ -200,6 +205,7 @@ local bg_cached = {
     invert_icons_in_night_mode = InvertIcons.get(),
     set_textbox_color = TextBoxBackgroundColor.get(),
     set_page_color = PageBackgroundColor.get(),
+    set_doc_color = DocumentBackgroundColor.get(),
     set_footer_color = FooterBackgroundColor.get(),
     set_sides_color = SidesBackgroundColor.get(),
     set_gap_color = GapBackgroundColor.get(),
@@ -485,6 +491,15 @@ local function background_color_menu()
                     if has_document_open() then
                         UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
                     end
+                end,
+            })
+
+            table.insert(items, {
+                text = _("Apply to reader pages (pdf, djvu, cbz...)"),
+                checked_func = DocumentBackgroundColor.get,
+                callback = function()
+                    DocumentBackgroundColor.toggle()
+                    bg_cached.set_doc_color = DocumentBackgroundColor.get()
                 end,
             })
 
@@ -1411,6 +1426,105 @@ function Button:init()
 
     if bg_cached.transparent_buttons then
         self[1].background = nil
+    end
+end
+
+-- Add background color to PDFs by using RGB multiplication (or replacement)
+local original_Document_drawPage = Document.drawPage
+function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
+    original_Document_drawPage(self, target, x, y, rect, pageno, zoom, rotation, gamma)
+
+    if not bg_cached.set_doc_color then
+        return
+    end
+
+    -- Manually replace white background in software-inverted night mode where multiplication would fail
+    -- Or to have an idempotent effect when dual pages are enabled
+    -- Otherwise, the right side of the screen becomes more saturated due to repeated multiplication
+    local ui = ReaderUI.instance
+    local dual_pages = ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
+    if (not Device:canHWInvert() and Screen.night_mode) or dual_pages then
+        for j = 0, rect.h - 1 do
+            for i = 0, rect.w - 1 do
+                local pixel = target:getPixel(x + i, y + j)
+                if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
+                    target:setPixel(x + i, y + j, bg_cached.bgcolor)
+                end
+            end
+        end
+    else
+        target:multiplyRectRGB(x, y, rect.w, rect.h, bg_cached.bgcolor)
+    end
+end
+
+-- Do the same for when "Invert Document" is enabled in night mode
+-- Use the day mode bgcolor instead of the one for night mode
+local original_Document_drawPageInverted = Document.drawPageInverted
+function Document:drawPageInverted(target, x, y, rect, pageno, zoom, rotation, gamma)
+    if not bg_cached.set_doc_color then
+        original_Document_drawPageInverted(self, target, x, y, rect, pageno, zoom, rotation, gamma)
+        return
+    end
+
+    local bgcolor = Blitbuffer.colorFromString(bg_cached.hex)
+
+    -- Multiply against background before inversion when hardware inversion is used
+    if Device:canHWInvert() then
+        local tile = self:renderPage(pageno, rect, zoom, rotation, gamma)
+        target:blitFrom(tile.bb,
+            x, y,
+            rect.x - tile.excerpt.x,
+            rect.y - tile.excerpt.y,
+            rect.w, rect.h)
+        target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
+        target:invertRect(x, y, rect.w, rect.h)
+    else
+        original_Document_drawPageInverted(self, target, x, y, rect, pageno, zoom, rotation, gamma)
+        target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor:invert())
+    end
+end
+
+-- Finally, add background color to context pages.
+local original_KoptInterface_drawContextPage = KoptInterface.drawContextPage
+function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
+    if not bg_cached.set_doc_color then
+        original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
+        return
+    end
+
+    local bgcolor = nightmode_invert and Blitbuffer.colorFromString(bg_cached.hex) or bg_cached.bgcolor
+
+    if nightmode_invert then
+        if Device:canHWInvert() then
+            local tile = self:renderPage(doc, pageno, rect, zoom, rotation, 1.0)
+            target:blitFrom(tile.bb,
+                x, y,
+                rect.x - tile.excerpt.x,
+                rect.y - tile.excerpt.y,
+                rect.w, rect.h)
+            target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
+            target:invertRect(x, y, rect.w, rect.h)
+        else
+            original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation,
+                nightmode_invert)
+            target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor:invert())
+        end
+    else
+        original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
+        local ui = ReaderUI.instance
+        local dual_pages = ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
+        if (not Device:canHWInvert() and Screen.night_mode) or dual_pages then
+            for j = 0, rect.h - 1 do
+                for i = 0, rect.w - 1 do
+                    local pixel = target:getPixel(x + i, y + j)
+                    if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
+                        target:setPixel(x + i, y + j, bgcolor)
+                    end
+                end
+            end
+        else
+            target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
+        end
     end
 end
 

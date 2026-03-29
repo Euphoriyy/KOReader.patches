@@ -99,6 +99,7 @@ Besides the color, it has options for:
 - A toggle to invert the background in night mode.
 - A toggle for TextBoxWidgets (which affects CoverBrowser).
 - A toggle to change the page background color. (epub, html, fb2, txt...)
+- A toggle to change the page background color.  (pdf, djvu, cbz...)
 - A toggle for the reader footer.
 - A toggle for the reader sides.
 - A toggle for the page gaps.
