@@ -179,13 +179,20 @@ local function clipRoundedRect(bb, x, y, w, h, r, color)
     if 2 * r > w then r = math.floor(w / 2) end
     if 2 * r > h then r = math.floor(h / 2) end
 
-    local cache = getCornerCache(r, r)
-    local dr    = cache.dr
+    local cache  = getCornerCache(r, r)
+    local dr     = cache.dr
 
-    applyMask(bb, cache.clip, x, y, r, dr, color, true, true)
-    applyMask(bb, cache.clip, x + w - r, y, r, dr, color, false, true)
-    applyMask(bb, cache.clip, x, y + h - r, r, dr, color, true, false)
-    applyMask(bb, cache.clip, x + w - r, y + h - r, r, dr, color, false, false)
+    local colors = color and { color, color, color, color } or {
+        bb:getPixel(x - 1, y - 1),
+        bb:getPixel(x + w + 1, y - 1),
+        bb:getPixel(x - 1, y + h + 1),
+        bb:getPixel(x + w + 1, y + h + 1),
+    }
+
+    applyMask(bb, cache.clip, x, y, r, dr, colors[1], true, true)
+    applyMask(bb, cache.clip, x + w - r, y, r, dr, colors[2], false, true)
+    applyMask(bb, cache.clip, x, y + h - r, r, dr, colors[3], true, false)
+    applyMask(bb, cache.clip, x + w - r, y + h - r, r, dr, colors[4], false, false)
 end
 
 local function patchCoverBrowser(plugin)
@@ -475,7 +482,6 @@ local function patchCoverBrowser(plugin)
         local fy = y + math.floor((self.height - frame_dimen.h) / 2)
         local image_x = fx + math.floor((frame_dimen.w - image_size.w) / 2)
         local image_y = fy + math.floor((frame_dimen.h - image_size.h) / 2)
-        local bgcolor = bb:getPixel(fx - 1, fy - 1)
 
         local cover_border = Screen:scaleBySize(folder_border)
 
@@ -483,7 +489,7 @@ local function patchCoverBrowser(plugin)
         local corner_radius = Screen:scaleBySize(24)
         local border_radius = Screen:scaleBySize(22)
 
-        clipRoundedRect(bb, fx, fy, image_size.w, image_size.h, corner_radius, bgcolor)
+        clipRoundedRect(bb, fx, fy, image_size.w, image_size.h, corner_radius)
         bb:paintBorder(image_x, image_y, image_size.w, image_size.h, cover_border, border_color, border_radius, false)
     end
 
