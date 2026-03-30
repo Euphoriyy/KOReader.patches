@@ -1429,6 +1429,23 @@ function Button:init()
     end
 end
 
+-- Helper: recolor light pixels as an alternative to RGB multiplication
+local function recolorLightPixels(bb, x, y, w, h, c)
+    local bb_w = bb:getWidth()
+    local bb_h = bb:getHeight()
+    for j = 0, h - 1 do
+        for i = 0, w - 1 do
+            local px, py = x + i, y + j
+            if px >= 0 and py >= 0 and px < bb_w and py < bb_h then
+                local pixel = bb:getPixel(px, py)
+                if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
+                    bb:setPixel(px, py, c)
+                end
+            end
+        end
+    end
+end
+
 -- Add background color to PDFs by using RGB multiplication (or replacement)
 local original_Document_drawPage = Document.drawPage
 function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
@@ -1444,14 +1461,7 @@ function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
     local ui = ReaderUI.instance
     local dual_pages = ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
     if (not Device:canHWInvert() and Screen.night_mode) or dual_pages then
-        for j = 0, rect.h - 1 do
-            for i = 0, rect.w - 1 do
-                local pixel = target:getPixel(x + i, y + j)
-                if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
-                    target:setPixel(x + i, y + j, bg_cached.bgcolor)
-                end
-            end
-        end
+        recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
     else
         target:multiplyRectRGB(x, y, rect.w, rect.h, bg_cached.bgcolor)
     end
@@ -1484,7 +1494,7 @@ function Document:drawPageInverted(target, x, y, rect, pageno, zoom, rotation, g
     end
 end
 
--- Finally, add background color to context pages.
+-- Finally, add background color to context pages
 local original_KoptInterface_drawContextPage = KoptInterface.drawContextPage
 function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
     if not bg_cached.set_fixed_color then
@@ -1514,14 +1524,7 @@ function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, ro
         local ui = ReaderUI.instance
         local dual_pages = ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
         if (not Device:canHWInvert() and Screen.night_mode) or dual_pages then
-            for j = 0, rect.h - 1 do
-                for i = 0, rect.w - 1 do
-                    local pixel = target:getPixel(x + i, y + j)
-                    if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
-                        target:setPixel(x + i, y + j, bgcolor)
-                    end
-                end
-            end
+            recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
         else
             target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
         end
