@@ -1429,6 +1429,12 @@ function Button:init()
     end
 end
 
+-- Helper: check if dual pages are enabled
+local function has_dual_pages()
+    local ui = ReaderUI.instance
+    return ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
+end
+
 -- Helper: recolor light pixels as an alternative to RGB multiplication
 local function recolorLightPixels(bb, x, y, w, h, c)
     local bb_w = bb:getWidth()
@@ -1458,9 +1464,7 @@ function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
     -- Manually replace white background in software-inverted night mode where multiplication would fail
     -- Or to have an idempotent effect when dual pages are enabled
     -- Otherwise, the right side of the screen becomes more saturated due to repeated multiplication
-    local ui = ReaderUI.instance
-    local dual_pages = ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
-    if (not Device:canHWInvert() and Screen.night_mode) or dual_pages then
+    if (not Device:canHWInvert() and Screen.night_mode) or has_dual_pages() then
         recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
     else
         target:multiplyRectRGB(x, y, rect.w, rect.h, bg_cached.bgcolor)
@@ -1521,9 +1525,7 @@ function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, ro
         end
     else
         original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
-        local ui = ReaderUI.instance
-        local dual_pages = ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
-        if (not Device:canHWInvert() and Screen.night_mode) or dual_pages then
+        if (not Device:canHWInvert() and Screen.night_mode) or has_dual_pages() then
             recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
         else
             target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
