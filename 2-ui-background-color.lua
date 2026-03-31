@@ -1462,9 +1462,10 @@ function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
     end
 
     -- Manually replace white background in software-inverted night mode where multiplication would fail
+    -- (Note that this doesn't work on Android due to the way it inverts during night mode)
     -- Or to have an idempotent effect when dual pages are enabled
     -- Otherwise, the right side of the screen becomes more saturated due to repeated multiplication
-    if (not Device:canHWInvert() and Screen.night_mode) or has_dual_pages() then
+    if (Screen.night_mode and not Device:canHWInvert() and not Device:isAndroid()) or has_dual_pages() then
         recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
     else
         target:multiplyRectRGB(x, y, rect.w, rect.h, bg_cached.bgcolor)
@@ -1494,7 +1495,12 @@ function Document:drawPageInverted(target, x, y, rect, pageno, zoom, rotation, g
         target:invertRect(x, y, rect.w, rect.h)
     else
         original_Document_drawPageInverted(self, target, x, y, rect, pageno, zoom, rotation, gamma)
-        target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor:invert())
+        -- Manually recolor in Android instead of using RGB multiplication
+        if Device:isAndroid() then
+            recolorLightPixels(target, x, y, rect.w, rect.h, bgcolor)
+        else
+            target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor:invert())
+        end
     end
 end
 
@@ -1509,6 +1515,7 @@ function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, ro
     local bgcolor = nightmode_invert and Blitbuffer.colorFromString(bg_cached.hex) or bg_cached.bgcolor
 
     if nightmode_invert then
+        -- Document:drawPageInverted path
         if Device:canHWInvert() then
             local tile = self:renderPage(doc, pageno, rect, zoom, rotation, 1.0)
             target:blitFrom(tile.bb,
@@ -1521,11 +1528,16 @@ function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, ro
         else
             original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation,
                 nightmode_invert)
-            target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor:invert())
+            if Device:isAndroid() then
+                recolorLightPixels(target, x, y, rect.w, rect.h, bgcolor)
+            else
+                target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor:invert())
+            end
         end
     else
+        -- Document:drawPage path
         original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
-        if (not Device:canHWInvert() and Screen.night_mode) or has_dual_pages() then
+        if (Screen.night_mode and not Device:canHWInvert() and not Device:isAndroid()) or has_dual_pages() then
             recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
         else
             target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
