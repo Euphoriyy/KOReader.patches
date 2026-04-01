@@ -1429,7 +1429,7 @@ function Button:init()
     end
 end
 
--- Helper: check if dual pages are enabled
+-- Helper: check if dual pages are enabled (comicreader.koplugin)
 local function has_dual_pages()
     local ui = ReaderUI.instance
     return ui.paging.isDualPageEnabled and ui.paging:isDualPageEnabled()
@@ -1439,14 +1439,15 @@ end
 local function recolorLightPixels(bb, x, y, w, h, c)
     local bb_w = bb:getWidth()
     local bb_h = bb:getHeight()
-    for j = 0, h - 1 do
-        for i = 0, w - 1 do
-            local px, py = x + i, y + j
-            if px >= 0 and py >= 0 and px < bb_w and py < bb_h then
-                local pixel = bb:getPixel(px, py)
-                if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
-                    bb:setPixel(px, py, c)
-                end
+    local x0 = math.max(x, 0)
+    local y0 = math.max(y, 0)
+    local x1 = math.min(x + w - 1, bb_w - 1)
+    local y1 = math.min(y + h - 1, bb_h - 1)
+    for py = y0, y1 do
+        for px = x0, x1 do
+            local pixel = bb:getPixel(px, py)
+            if pixel:getR() > 200 and pixel:getG() > 200 and pixel:getB() > 200 then
+                bb:setPixel(px, py, c)
             end
         end
     end
