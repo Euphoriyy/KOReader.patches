@@ -1465,7 +1465,8 @@ function Document:drawPage(target, x, y, rect, pageno, zoom, rotation, gamma)
     -- (Note that this doesn't work on Android due to the way it inverts during night mode)
     -- Or to have an idempotent effect when dual pages are enabled
     -- Otherwise, the right side of the screen becomes more saturated due to repeated multiplication
-    if (Screen.night_mode and not Device:canHWInvert() and not Device:isAndroid()) or has_dual_pages() then
+    local sw_invert = Screen.night_mode and not Device:canHWInvert()
+    if not Device:isAndroid() and (sw_invert or has_dual_pages()) then
         recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
     else
         target:multiplyRectRGB(x, y, rect.w, rect.h, bg_cached.bgcolor)
@@ -1537,7 +1538,8 @@ function KoptInterface:drawContextPage(doc, target, x, y, rect, pageno, zoom, ro
     else
         -- Document:drawPage path
         original_KoptInterface_drawContextPage(self, doc, target, x, y, rect, pageno, zoom, rotation, nightmode_invert)
-        if (Screen.night_mode and not Device:canHWInvert() and not Device:isAndroid()) or has_dual_pages() then
+        local sw_invert = Screen.night_mode and not Device:canHWInvert()
+        if not Device:isAndroid() and (sw_invert or has_dual_pages()) then
             recolorLightPixels(target, x, y, rect.w, rect.h, bg_cached.bgcolor)
         else
             target:multiplyRectRGB(x, y, rect.w, rect.h, bgcolor)
