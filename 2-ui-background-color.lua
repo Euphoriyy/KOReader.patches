@@ -1347,14 +1347,14 @@ function ButtonTable:init()
     end
 end
 
--- Add background, fill, and border colors to ProgressWidget painting method
-local original_ProgressWidget_paintTo = ProgressWidget.paintTo
-function ProgressWidget:paintTo(bb, x, y)
+-- Add background, fill, and border colors to ProgressWidget init method
+local original_ProgressWidget_init = ProgressWidget.init
+function ProgressWidget:init()
+    original_ProgressWidget_init(self)
+
     self.bgcolor = bg_cached.bgcolor
     self.fillcolor = bg_cached.bgcolor:invert()
     self.bordercolor = bg_cached.fgcolor
-
-    original_ProgressWidget_paintTo(self, bb, x, y)
 end
 
 -- Change the highlighted color of the button progress widget
