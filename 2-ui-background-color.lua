@@ -290,7 +290,7 @@ local function refresh()
     reloadIcons()
 
     -- Reapply page CSS
-    if bg_cached.set_reflowable_color and has_document_open() then
+    if bg_cached.set_reflowable_color and has_document_open() and ReaderUI.instance.rolling then
         UIManager:broadcastEvent(Event:new("ApplyStyleSheet"))
     end
 end
