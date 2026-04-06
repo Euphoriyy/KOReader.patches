@@ -257,7 +257,7 @@ end
 local original_FileManagerMenu_setUpdateItemTable = FileManagerMenu.setUpdateItemTable
 function FileManagerMenu:setUpdateItemTable()
     patch(self, require("ui/elements/filemanager_menu_order"), {
-        background_color = background_image_menu()
+        background_image = background_image_menu()
     })
     original_FileManagerMenu_setUpdateItemTable(self)
 end
@@ -265,7 +265,7 @@ end
 local original_ReaderMenu_setUpdateItemTable = ReaderMenu.setUpdateItemTable
 function ReaderMenu:setUpdateItemTable()
     patch(self, require("ui/elements/reader_menu_order"), {
-        background_color = background_image_menu()
+        background_image = background_image_menu()
     })
     original_ReaderMenu_setUpdateItemTable(self)
 end
