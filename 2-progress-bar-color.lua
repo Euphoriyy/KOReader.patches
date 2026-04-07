@@ -474,18 +474,11 @@ function ProgressWidget:paintTo(bb, x, y)
         )
     else
         -- Otherwise, we have to start with the background.
-        -- Normally rounded but no rounded color support currently
-        bb:paintRectRGB32(x, y, my_size.w, my_size.h, self.bgcolor)
+        bb:paintRoundedRectRGB32(x, y, my_size.w, my_size.h, self.bgcolor, self.radius)
         -- Then the border around that.
-        bb:paintBorder(
-            math.floor(x),
-            math.floor(y),
-            my_size.w,
-            my_size.h,
-            self.bordersize,
-            self.bordercolor,
-            self.radius
-        )
+        bb:paintBorderRGB32(math.floor(x), math.floor(y),
+            my_size.w, my_size.h,
+            self.bordersize, self.bordercolor, self.radius)
     end
 
     -- Then we can just paint the fill rectangle(s) and tick(s) on top of that.
