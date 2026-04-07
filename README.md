@@ -38,104 +38,25 @@ Based on [2-customise-progress-bar-colour-gui.lua](https://gist.github.com/Intro
 
 <img src="img/progress-bar-color.png" style="width:80%; height:auto;">
 
-### [🞂 2-ui-themes.lua](2-ui-themes.lua)
+### [🞂 2-ui-themes.lua](https://github.com/Euphoriyy/appearance.koplugin)
+
 > [!IMPORTANT]
-> The visual theme picker and edit menu depend on features from the latest release of KOReader (v2026.03).
-> For the foreground color to be previewed properly, inline markup colors must be enabled in the [UI font color patch](#-2-ui-font-colorlua).
+> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
 
-This patch adds the ability to set themes for the UI background and font colors.
+### [🞂 2-ui-font-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
 
-It requires [2-ui-font-color.lua](#-2-ui-font-colorlua) & [2-ui-background-color.lua](#-2-ui-background-colorlua).
+> [!IMPORTANT]
+> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
 
-It can be configured under **🞂 Appearance 🞂 Themes** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+### [🞂 2-ui-background-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
 
-Themes can be previewed when choosing them. Themes can also be edited by holding down on them when in the visual theme picker.
+> [!IMPORTANT]
+> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
 
-Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the colors to be picked visually.
+### [🞂 2-ui-background-image.lua](https://github.com/Euphoriyy/appearance.koplugin)
 
-Inspired by [2-color-theme.lua](https://github.com/artemartemenko/koreader-color-themes) from [@artemartemenko](https://github.com/artemartemenko).
-
-<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-1.png"><img src="img/ui-themes-1.png" alt="" width="200px"></a>
-<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-2.png"><img src="img/ui-themes-2.png" alt="" width="200px"></a>
-<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-3.png"><img src="img/ui-themes-3.png" alt="" width="200px"></a>
-<a href="https://github.com/Euphoriyy/KOReader.patches/raw/master/img/ui-themes-4.png"><img src="img/ui-themes-4.png" alt="" width="200px"></a>
-
-### [🞂 2-ui-font-color.lua](2-ui-font-color.lua)
-This patch adds the ability to change the RGB color of the UI font.
-
-It also adds inline markup color support to UI text with the following syntax:
-
-> **§color** text **§r**
-
-The color can be addressed by either name (white) or RGB hex (#ffffff or #fff).
-This can be useful for when you want parts of text or icons to be a certain color (such as in a titlebar patch).
-
-It can be configured under **🞂 Appearance 🞂 Font color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
-
-Besides the color, it has options for:
-- A toggle to use an alternative color in night mode.
-- A toggle to invert the background in night mode.
-- A toggle for TextBoxWidgets (which affects CoverBrowser).
-- A toggle for the dictionary text.
-- A toggle to change the page font color. (epub, html, fb2, txt...)
-- A toggle to change the color only in the reader.
-- A toggle for markup colors.
-- A toggle to invert inline markup colors in night mode.
-
-Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
-
-<img src="img/ui-font-color.png" style="width:80%; height:auto;">
-
-### [🞂 2-ui-background-color.lua](2-ui-background-color.lua)
-This patch adds the ability to change the RGB color of the UI background.
-
-It is most recommended for non-e-ink devices for visiblity and refresh clarity, but it works fine on color e-ink (and B/W e-ink for selecting shades of gray). It is also best used together with [2-ui-font-color.lua](#-2-ui-font-colorlua) for best contrast.
-
-It can be configured under **🞂 Appearance 🞂 Background color:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
-
-Besides the color, it has options for:
-- A toggle to use an alternative color in night mode.
-- A toggle to invert icons in night mode (when an alternative color is set).
-- A toggle to invert the background in night mode.
-- A toggle for TextBoxWidgets (which affects CoverBrowser).
-- A toggle to change the page background color. (epub, html, fb2, txt...)
-- A toggle to change the page background color.  (pdf, djvu, cbz...)
-- A toggle for the reader footer.
-- A toggle for the reader sides.
-- A toggle for the page gaps.
-- A toggle for making icons fully transparent.
-- A toggle for making buttons fully transparent.
-- A toggle for making the reader footer fully transparent.
-
-Optionally, it supports [colorwheelwidget.lua](#-colorwheelwidgetlua), allowing the color to be picked visually.
-
-<img src="img/ui-background-color-1.png" style="width:80%; height:auto;">
-
-<img src="img/ui-background-color-2.png" style="width:80%; height:auto;">
-
-### [🞂 2-ui-background-image.lua](2-ui-background-image.lua)
-This patch adds the ability to set a background image for the KOReader UI.
-
-It is most recommended for non-e-ink devices for visiblity and refresh clarity, but it works fine on e-ink as well. It is also best used together with [2-ui-background-color.lua](#-2-ui-background-colorlua) & [2-ui-font-color.lua](#-2-ui-font-colorlua) for UI refinement and transparent icons.
-
-It can be configured under **🞂 Appearance 🞂 Background image:** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
-
-Aside from the image, it has options for:
-- Stretching the image to fit the screen.
-- Automatically rotating the image for the best fit.
-- Inverting the image in night mode.
-- Showing in the file browser.
-- Showing in the reader behind your pages.
-- Showing in the top menu.
-
-> *In the File Browser*
-<img src="img/ui-background-image-1.png" style="width:80%; height:auto;">
-
-> *In the Reader*
-<img src="img/ui-background-image-2.png" style="width:80%; height:auto;">
-
-> *In the Top Menu*
-<img src="img/ui-background-image-3.png" style="width:80%; height:auto;">
+> [!IMPORTANT]
+> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
 
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
 
