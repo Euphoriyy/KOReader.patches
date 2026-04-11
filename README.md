@@ -21,44 +21,6 @@ This patch adds dispatcher actions (assignable to gestures) for going to the nex
 
 Made for [kobo.koplugin](https://github.com/OGKevin/kobo.koplugin).
 
-### [🞂 2-progress-bar-color.lua](2-progress-bar-color.lua)
-
-> [!IMPORTANT]
-> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
-
-### [🞂 2-ui-themes.lua](https://github.com/Euphoriyy/appearance.koplugin)
-
-> [!IMPORTANT]
-> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
-
-### [🞂 2-ui-font-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
-
-> [!IMPORTANT]
-> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
-
-### [🞂 2-ui-background-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
-
-> [!IMPORTANT]
-> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
-
-### [🞂 2-ui-background-image.lua](https://github.com/Euphoriyy/appearance.koplugin)
-
-> [!IMPORTANT]
-> The features of this patch have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
-
-### [🞂 2-invert-document.lua](2-invert-document.lua)
-
-> [!WARNING]
-> This patch is now obsolete as of the newest release (v2026.03) with koreader/koreader#14954.
-> It should be removed when updating to new releases or the nightly.
-
-This patch adds a document option to invert CBZs/PDFs in night mode.
-It is useful for reading comics/manga in night mode.
-
-Made for koreader/koreader#9899.
-
-<img src="img/invert-document.png" style="width:50%; height:auto;">
-
 ### [🞂 2-correct-screen-borders.lua](2-correct-screen-borders.lua)
 This patch adds border lines to the sides of the screen to correct for e-ink issues.
 Made for [this post by wigglytoad](https://www.reddit.com/r/koreader/comments/1r7l5co/request_patch_to_remove_1pixelwide_vertical_white/).
@@ -102,6 +64,30 @@ filename (without the .lua extension). For example:
     widgets/colorwheelwidget.lua  →  "colorwheelwidget"
 
 Information on how to use it in patches/plugins can be found in the patch comments.
+
+### [🞂 2-invert-document.lua](2-invert-document.lua)
+
+> [!WARNING]
+> This patch is now obsolete as of the newest release (v2026.03) with koreader/koreader#14954.
+> It should be removed when updating to new releases or the nightly.
+
+This patch adds a document option to invert CBZs/PDFs in night mode.
+It is useful for reading comics/manga in night mode.
+
+Made for koreader/koreader#9899.
+
+<img src="img/invert-document.png" style="width:50%; height:auto;">
+
+---
+
+> [!IMPORTANT]
+> The features of the following patches have been merged into [appearance.koplugin](https://github.com/Euphoriyy/appearance.koplugin).
+
+### [🞂 2-progress-bar-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
+### [🞂 2-ui-themes.lua](https://github.com/Euphoriyy/appearance.koplugin)
+### [🞂 2-ui-font-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
+### [🞂 2-ui-background-color.lua](https://github.com/Euphoriyy/appearance.koplugin)
+### [🞂 2-ui-background-image.lua](https://github.com/Euphoriyy/appearance.koplugin)
 
 ## Widgets
 
