@@ -18,7 +18,6 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Font = require("ui/font")
 local Screen = Device.screen
-local ffi = require("ffi")
 
 ------------------------------------------------------------
 
@@ -80,54 +79,6 @@ local function hsvToRgb(h, s, v)
         math.floor((g + m) * 255 + 0.5),
         math.floor((b + m) * 255 + 0.5)
 end
-
-------------------------------------------------------------
--- RGB fill function
-------------------------------------------------------------
-local uint8pt = ffi.typeof("uint8_t*")
-
--- color value pointer types
-local P_Color8A = ffi.typeof("Color8A*")
-local P_ColorRGB16 = ffi.typeof("ColorRGB16*")
-local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
-
--- RGB version of Blitbuffer:fill
-local function fillRGB(bb, bbtype, v)
-    -- While we could use a plain ffi.fill, there are a few BB types where we do not want to stomp on the alpha byte...
-
-    -- Handle invert...
-    if bb:getInverse() == 1 then v = v:invert() end
-
-    --print("fill")
-    if bbtype == Blitbuffer.TYPE_BBRGB32 then
-        local src = v:getColorRGB32()
-        local p = ffi.cast(P_ColorRGB32, bb.data)
-        for _ = 1, bb.pixel_stride * bb.h do
-            p[0] = src
-            -- Pointer arithmetics magic: +1 on an uint32_t* means +4 bytes (i.e., next pixel) ;).
-            p = p + 1
-        end
-    elseif bbtype == Blitbuffer.TYPE_BBRGB16 then
-        local src = v:getColorRGB16()
-        local p = ffi.cast(P_ColorRGB16, bb.data)
-        for _ = 1, bb.pixel_stride * bb.h do
-            p[0] = src
-            p = p + 1
-        end
-    elseif bbtype == Blitbuffer.TYPE_BB8A then
-        local src = v:getColor8A()
-        local p = ffi.cast(P_Color8A, bb.data)
-        for _ = 1, bb.pixel_stride * bb.h do
-            p[0] = src
-            p = p + 1
-        end
-    else
-        -- Should only be BBRGB24 & BB8 left, where we can use ffi.fill ;)
-        local p = ffi.cast(uint8pt, bb.data)
-        ffi.fill(p, bb.stride * bb.h, v.alpha)
-    end
-end
-
 
 ------------------------------------------------------------
 -- Per-radius lookup cache: hue + saturation for every pixel.
@@ -196,7 +147,7 @@ function ColorWheel:_renderToBuffer(x, y)
     local side    = dr * 2 + 1
     local buf     = Blitbuffer.new(side, side, Blitbuffer.TYPE_BBRGB32)
     local bgcolor = Screen.bb:getPixel(x - 1, y - 1)
-    fillRGB(buf, Blitbuffer.TYPE_BBRGB32, bgcolor)
+    buf:paintRectRGB32(0, 0, side, side, bgcolor)
 
     local cache = getWheelCache(dr)
     local hue_t = cache.hue
