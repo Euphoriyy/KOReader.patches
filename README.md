@@ -41,14 +41,14 @@ Edited from [the version by angelsangita](https://github.com/angelsangita/Koread
 ### [🞂 2-rounded-covers.lua](2-rounded-covers.lua)
 This patch adds rounded corners to the book covers in the file browser.
 
-The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [UI background color patch](#-2-ui-background-colorlua).
+The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [Appearance plugin](https://github.com/Euphoriyy/appearance.koplugin).
 
 Based on the [original patch by SeriousHornet](https://github.com/SeriousHornet/KOReader.patches?tab=readme-ov-file#-2--rounded-coverslua).
 
 ### [🞂 2-rounded-folder-covers.lua](2-rounded-folder-covers.lua)
 This patch adds rounded corners to the folder covers in the file browser.
 
-The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [UI background color patch](#-2-ui-background-colorlua).
+The core feature that distinguishes this version is that it is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [Appearance plugin](https://github.com/Euphoriyy/appearance.koplugin).
 
 It also adds an option to show/hide the file count.
 
