@@ -113,3 +113,12 @@ The options are:
 - `apply_text`
 
 <img src="img/colorwheelwidget.png" style="width:50%; height:auto;">
+
+## Support
+If you want to support me, you can star this repository or buy me a coffee. :)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/X8X21UH4E1)
+
+## License
+This project is licensed under the **GNU General Public License v3.0**.
+See the [LICENSE](./LICENSE) file for full details.
