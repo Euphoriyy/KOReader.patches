@@ -1,7 +1,7 @@
 --[[
     This user patch adds rounded corners to book covers.
     Its main distinguishing feature is that it is background-agnostic,
-    so it supports my background color patch.
+    so it supports so it supports the Appearance plugin.
     It also does not require the use of icon files.
 
     Source:

@@ -54,6 +54,13 @@ It also adds an option to show/hide the file count.
 
 Based on the [original patch by SeriousHornet](https://github.com/SeriousHornet/KOReader.patches?tab=readme-ov-file#-2-rounded-folder-coverslua).
 
+### [🞂 2-rounded-covers-for-simpleui.lua](2-rounded-covers-for-simpleui.lua)
+This patch adds rounded corners to the covers used in SimpleUI.
+
+This patch is background-agnostic, meaning that it works on any background without requiring any corner icons. Due to that, this patch works well with the [Appearance plugin](https://github.com/Euphoriyy/appearance.koplugin).
+
+The radius, or in other words the roundness of the covers, and border thickness can be adjusted at the top of the patch.
+
 ### [🞂 2-custom-widgets.lua](2-custom-widgets.lua)
 This patch adds support for custom widgets that can be used by other patches and plugins.
 

@@ -1,16 +1,17 @@
 --[[
-    This user patch adds rounded corners to book covers.
-    Its main distinguishing feature is that it is background-agnostic,
-    so it supports so it supports the Appearance plugin.
+    This user patch adds rounded corners to the covers used in SimpleUI.
+    It is background-agnostic, so it supports the Appearance plugin.
     It also does not require the use of icon files.
-
-    Source:
-    -- Based on https://github.com/SeriousHornet/KOReader.patches/blob/main/2--rounded-covers.lua
 --]]
 
-local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
 local userpatch = require("userpatch")
+
+-- Adjust this for more/less rounded corners (high -> rounder, less -> squarer)
+local RADIUS_SIZE = 20
+
+-- Adjust this for a thicker outline
+local BORDER_SIZE = 1
 
 local _corner_cache = {}
 
@@ -87,32 +88,34 @@ local function clipRoundedRect(bb, x, y, w, h, r, color)
     applyMask(bb, cache.clip, x + w - r, y + h - r, r, dr, colors[4], false, false)
 end
 
-local function patchBookCoverRoundedCorners(plugin)
-    local MosaicMenu = require("mosaicmenu")
-    local MosaicMenuItem = userpatch.getUpValue(MosaicMenu._updateItemsBuildUI, "MosaicMenuItem")
+-- Add rounded corners to SimpleUI (plugin)
+userpatch.registerPatchPluginFunc("simpleui", function()
+    local SH = require("desktop_modules/module_books_shared")
+    if not SH then return end
 
-    if MosaicMenuItem.patched_rounded_corners then
-        return
-    end
-    MosaicMenuItem.patched_rounded_corners = true
+    local original_getBookCover = SH.getBookCover
+    function SH.getBookCover(...)
+        local fc = original_getBookCover(...)
+        if not fc then return nil end
+        local img = fc and fc[1]
+        if not img then return fc end
 
-    local orig_MosaicMenuItem_paint = MosaicMenuItem.paintTo
+        -- Prevent repatching
+        if img._rounded_corners_patched then return fc end
+        img._rounded_corners_patched = true
 
-    function MosaicMenuItem:paintTo(bb, x, y)
-        -- First, call the original paintTo method to draw the cover normally
-        orig_MosaicMenuItem_paint(self, bb, x, y)
+        -- Hook onto the cover's paint function
+        local original_img_paintTo = img.paintTo
+        function img:paintTo(bb, x, y)
+            original_img_paintTo(self, bb, x, y)
 
-        -- Locate the cover frame widget as the base code does
-        local target = self[1][1][1]
-
-        if target and target.dimen then
             -- Outer frame rect (already centered)
-            local fx = x + math.floor((self.width - target.dimen.w) / 2)
-            local fy = y + math.floor((self.height - target.dimen.h) / 2)
-            local fw, fh = target.dimen.w, target.dimen.h
+            local fw, fh = fc.dimen.w, fc.dimen.h
+            local fx = x + math.floor((self.width - fw) / 2)
+            local fy = y + math.floor((self.height - fh) / 2)
 
             -- Inner content rect = cover area inside padding
-            local pad = target.padding or 0
+            local pad = fc.padding or 0
             local inset = 0 --Screen:scaleBySize(1)
             local ix = math.floor(fx + pad + inset)
             local iy = math.floor(fy + pad + inset)
@@ -120,20 +123,18 @@ local function patchBookCoverRoundedCorners(plugin)
             local ih = math.max(1, fh - 2 * (pad + inset))
 
             -- Paint rounded corners on the outer frame rect
-            local cover_border = Screen:scaleBySize(0.5) -- tweak for thicker line
-            if not self.is_directory then
-                fw, fh = target.dimen.w, target.dimen.h
-                fx = x + math.floor((self.width - fw) / 2)
-                fy = y + math.floor((self.height - fh) / 2)
+            local cover_border = BORDER_SIZE
+            local border_color = fc.color
+            local corner_radius = Screen:scaleBySize(RADIUS_SIZE)
+            local border_radius = Screen:scaleBySize(RADIUS_SIZE - 2)
 
-                local border_color = Blitbuffer.COLOR_BLACK
-                local corner_radius = Screen:scaleBySize(24)
-                local border_radius = Screen:scaleBySize(22)
-
-                clipRoundedRect(bb, fx, fy, fw, fh, corner_radius)
-                bb:paintBorder(ix, iy, iw, ih, cover_border, border_color, border_radius, false)
-            end
+            clipRoundedRect(bb, fx, fy, fw, fh, corner_radius)
+            bb:paintBorder(ix, iy, iw, ih, cover_border, border_color, border_radius, false)
         end
+
+        -- Don't draw the border of the original container
+        fc.bordersize = 0
+
+        return fc
     end
-end
-userpatch.registerPatchPluginFunc("coverbrowser", patchBookCoverRoundedCorners)
+end)
