@@ -293,7 +293,6 @@ local function set_menu(self, menu_items)
                         end,
                     }
                     UIManager:show(spin)
-                    if touchmenu_instance then touchmenu_instance:updateItems() end
                 end,
             },
         },
