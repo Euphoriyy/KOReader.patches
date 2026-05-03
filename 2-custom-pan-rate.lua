@@ -62,6 +62,7 @@ function ReaderScrolling:addToMainMenu(menu_items)
 
     table.insert(menu_items.scrolling.sub_item_table, #menu_items.scrolling.sub_item_table + 1, {
         text_func = function() return T(_("Pan rate: %1 Hz"), CustomPanRate.get()) end,
+        enabled_func = function() return not Screen.low_pan_rate end,
         keep_menu_open = true,
         callback = function(touchmenu_instance)
             local spin = SpinWidget:new {
