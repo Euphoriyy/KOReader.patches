@@ -72,6 +72,19 @@ filename (without the .lua extension). For example:
 
 Information on how to use it in patches/plugins can be found in the patch comments.
 
+### [🞂 2-custom-pan-rate.lua](2-custom-pan-rate.lua)
+
+> [!IMPORTANT]
+> This patch aims to provide smoother scrolling but will hurt performance in return.
+> This cannot be overcome without GPU rendering.
+
+This patch adds an option for selecting a custom pan rate which allows for smoother scrolling.
+It defaults to the screen's refresh rate on Desktop or KOReader's default of 30 Hz.
+
+It can be configured under **🞂 Taps and gestures 🞂 Scrolling 🞂 Pan rate** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab after a document is opened.
+
+Made for koreader/koreader#12947.
+
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
 
 > [!WARNING]
