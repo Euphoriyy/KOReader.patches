@@ -275,7 +275,10 @@ local function set_menu(self, menu_items)
 
                     local spin = SpinWidget:new {
                         title_text = _("Dim level"),
-                        info_text = _("Frontlight brightness on refresh. (Lower ⇛ Darker)"),
+                        info_text = _([[
+Frontlight brightness during refreshes.
+Lower levels are dimmer.
+]]),
                         value = DimLevel.get(),
                         default_value = cfg.default,
                         value_min = cfg.min,
