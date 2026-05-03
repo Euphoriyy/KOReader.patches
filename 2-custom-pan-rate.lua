@@ -1,13 +1,12 @@
-local ReaderScrolling = require("apps/reader/modules/readerscrolling")
 local ReaderUI = require("apps/reader/readerui")
 local Screen = require("device").screen
 local SpinWidget = require("ui/widget/spinwidget")
 local UIManager = require("ui/uimanager")
 local time = require("ui/time")
+local userpatch = require("userpatch")
 local util = require("ffi/util")
 local _ = require("gettext")
 local C_ = _.pgettext
-local T = require("ffi/util").template
 
 function Setting(name, default)
     local self = {}
@@ -30,10 +29,10 @@ local function get_refresh_rate()
 end
 
 -- Setting
-local CustomPanRate = Setting("custom_pan_rate", get_refresh_rate() or 30.0)
+local PanRate = Setting("pan_rate", get_refresh_rate() or 30.0)
 
 local function update_pan_rate(self)
-    local pan_rate = Screen.low_pan_rate and 2.0 or CustomPanRate.get()
+    local pan_rate = Screen.low_pan_rate and 2.0 or PanRate.get()
     self.pan_rate = pan_rate
 
     if self.document.info.has_pages then
@@ -53,42 +52,48 @@ function ReaderUI:init()
     update_pan_rate(self)
 end
 
-local original_ReaderScrolling_addToMainMenu = ReaderScrolling.addToMainMenu
-function ReaderScrolling:addToMainMenu(menu_items)
-    original_ReaderScrolling_addToMainMenu(self, menu_items)
+-- Add menu to Gestures plugin
+local patched = false
 
-    -- Add separator to previous submenu item
-    menu_items.scrolling.sub_item_table[#menu_items.scrolling.sub_item_table].separator = true
+userpatch.registerPatchPluginFunc("gestures", function(Gestures)
+    if patched then return end
 
-    table.insert(menu_items.scrolling.sub_item_table, #menu_items.scrolling.sub_item_table + 1, {
-        text_func = function() return T(_("Pan rate: %1 Hz"), CustomPanRate.get()) end,
-        enabled_func = function() return not Screen.low_pan_rate end,
-        keep_menu_open = true,
-        callback = function(touchmenu_instance)
-            local spin = SpinWidget:new {
-                title_text = _("Scroll pan rate"),
-                info_text = _([[
+    local original_Gestures_addIntervals = Gestures.addIntervals
+    function Gestures:addIntervals(menu_items)
+        original_Gestures_addIntervals(self, menu_items)
+
+        table.insert(menu_items.gesture_intervals.sub_item_table, 1, {
+            text = _("Pan rate"),
+            enabled_func = function() return not Screen.low_pan_rate end,
+            keep_menu_open = true,
+            callback = function(touchmenu_instance)
+                local spin = SpinWidget:new {
+                    title_text = _("Pan rate"),
+                    info_text = _([[
 The rate is how often the screen will be refreshed per second while panning.
 Higher values mean faster screen updates but also use more CPU.
 
 The rate value can range from 1 Hz to 360 Hz.
 ]]),
-                width = math.floor(Screen:getWidth() * 0.75),
-                value = CustomPanRate.get(),
-                value_min = 1.0,
-                value_max = 360.0,
-                value_step = 1,
-                value_hold_step = 15,
-                unit = C_("Frequency", "Hz"),
-                ok_text = _("Set rate"),
-                default_value = CustomPanRate.default,
-                callback = function(widget)
-                    CustomPanRate.set(widget.value)
-                    update_pan_rate(self.ui)
-                    if touchmenu_instance then touchmenu_instance:updateItems() end
-                end,
-            }
-            UIManager:show(spin)
-        end,
-    })
-end
+                    width = math.floor(Screen:getWidth() * 0.75),
+                    value = PanRate.get(),
+                    value_min = 1.0,
+                    value_max = 360.0,
+                    value_step = 1,
+                    value_hold_step = 15,
+                    unit = C_("Frequency", "Hz"),
+                    ok_text = _("Set rate"),
+                    default_value = PanRate.default,
+                    callback = function(widget)
+                        PanRate.set(widget.value)
+                        update_pan_rate(self.ui)
+                        if touchmenu_instance then touchmenu_instance:updateItems() end
+                    end,
+                }
+                UIManager:show(spin)
+            end,
+        })
+    end
+
+    patched = true
+end)

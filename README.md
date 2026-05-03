@@ -81,7 +81,7 @@ Information on how to use it in patches/plugins can be found in the patch commen
 This patch adds an option for selecting a custom pan rate which allows for smoother scrolling.
 It defaults to the screen's refresh rate on Desktop or KOReader's default of 30 Hz.
 
-It can be configured under **🞂 Taps and gestures 🞂 Scrolling 🞂 Pan rate** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab after a document is opened.
+It can be configured under **🞂 Taps and gestures 🞂 Gesture intervals 🞂 Pan rate** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
 
 Made for koreader/koreader#12947.
 
