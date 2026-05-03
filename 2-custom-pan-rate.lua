@@ -34,17 +34,18 @@ local PanRate = Setting("pan_rate", get_refresh_rate() or 30.0)
 
 function ReaderUI:onUpdatePanRate()
     local pan_rate = Screen.low_pan_rate and 2.0 or PanRate.get()
+    local pan_interval = time.s(1 / pan_rate)
     self.pan_rate = pan_rate
 
     if self.document.info.has_pages then
         self.paging.pan_rate = pan_rate
-        self.paging.pan_interval = time.s(1 / self.paging.pan_rate)
+        self.paging.pan_interval = pan_interval
     else
         self.rolling.pan_rate = pan_rate
-        self.rolling.pan_interval = time.s(1 / self.rolling.pan_rate)
+        self.rolling.pan_interval = pan_interval
     end
     self.scrolling.pan_rate = pan_rate
-    self.scrolling.pan_interval = time.s(1 / self.scrolling.pan_rate)
+    self.scrolling.pan_interval = pan_interval
 end
 
 local original_ReaderUI_init = ReaderUI.init
