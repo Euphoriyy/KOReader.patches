@@ -1,3 +1,4 @@
+local Event = require("ui/event")
 local ReaderUI = require("apps/reader/readerui")
 local Screen = require("device").screen
 local SpinWidget = require("ui/widget/spinwidget")
@@ -31,7 +32,7 @@ end
 -- Setting
 local PanRate = Setting("pan_rate", get_refresh_rate() or 30.0)
 
-local function update_pan_rate(self)
+function ReaderUI:onUpdatePanRate()
     local pan_rate = Screen.low_pan_rate and 2.0 or PanRate.get()
     self.pan_rate = pan_rate
 
@@ -49,7 +50,7 @@ end
 local original_ReaderUI_init = ReaderUI.init
 function ReaderUI:init()
     original_ReaderUI_init(self)
-    update_pan_rate(self)
+    self:handleEvent(Event:new("UpdatePanRate"))
 end
 
 -- Add menu to Gestures plugin
@@ -86,7 +87,7 @@ The rate value can range from 1 Hz to 360 Hz.
                     default_value = PanRate.default,
                     callback = function(widget)
                         PanRate.set(widget.value)
-                        update_pan_rate(self.ui)
+                        UIManager:broadcastEvent(Event:new("UpdatePanRate"))
                         if touchmenu_instance then touchmenu_instance:updateItems() end
                     end,
                 }
