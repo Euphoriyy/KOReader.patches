@@ -85,6 +85,8 @@ It can be configured under **🞂 Taps and gestures 🞂 Gesture intervals 🞂 
 
 Made for koreader/koreader#12947.
 
+## Obsolete Patches
+
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
 
 > [!WARNING]
