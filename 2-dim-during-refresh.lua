@@ -286,9 +286,6 @@ local function set_menu(self, menu_items)
                         unit = "%",
                         callback = function(widget)
                             DimLevel.set(widget.value)
-                            if self.overlay_rect then
-                                UIManager:setDirty(self.ui.dialog, "partial")
-                            end
                             if touchmenu_instance then touchmenu_instance:updateItems() end
                         end,
                     }
