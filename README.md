@@ -1,6 +1,6 @@
 # KOReader.patches
 
-Useful patches for KOReader that I have either compiled, edited, or created myself.
+Useful patches for [<img src="img/koreader.png" width="24" /> KOReader](https://koreader.rocks) that I have either compiled, edited, or created myself.
 
 ### [🞂 2-dim-during-refresh.lua](2-dim-during-refresh.lua)
 This patch lowers the brightness during refreshes in night mode to prevent bright flashes on e-ink.
