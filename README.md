@@ -85,6 +85,16 @@ It can be configured under **🞂 Taps and gestures 🞂 Gesture intervals 🞂 
 
 Made for koreader/koreader#12947.
 
+### [🞂 2-sw-page-turn-animation.lua](2-sw-page-turn-animation.lua)
+
+This patch adds a software-based page turn wipe animation. This version adds support for all devices (Kindle, Kobo, etc.) and fixed-layout documents (PDFs, CBZs, DJVUs, etc.).
+
+It can be configured under **🞂 Taps and gestures 🞂 Page turns** on the <sub><img src="img/appbar.settings.svg" style="width:2%; height:auto;"></sub> **Settings** tab.
+
+Based on the [patch by federico1176-wq](https://github.com/federico1176-wq/Page-turn-animation/blob/main/patch) and [original feature](https://github.com/koreader/koreader/issues/15629) by [@huangyingkanghuang-ux](https://github.com/huangyingkanghuang-ux).
+
+Related to koreader/koreader#15468.
+
 ## Obsolete Patches
 
 ### [🞂 2-invert-document.lua](2-invert-document.lua)
