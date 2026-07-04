@@ -26,11 +26,14 @@ local function getSteps()
 end
 -- ===========================================================================
 
+local hardware_animate = Device.canDoSwipeAnimation()
+local software_animate = not hardware_animate
+
 -- 1) Framebuffer: implement saved_bb snapshot + real setSwipeAnimations/setSwipeDirection
 Screen.beforePaint = function(self)
     if not self.painting then
         self.painting = true
-        if self.swipe_animations then
+        if self.swipe_animations and software_animate then
             if self.saved_bb then self.saved_bb:free() end
             self.saved_bb = self.bb:copy()
         end
@@ -48,8 +51,6 @@ end
 Screen.setSwipeDirection = function(self, direction)
     self.swipe_forward = direction
 end
-
-local hardware_animate = Device.canDoSwipeAnimation()
 
 -- 2) Make sure the device reports it can do the (software) swipe animation,
 --    even if this specific device model has it hardcoded to false.
@@ -102,8 +103,6 @@ UIManager._repaint = function(self)
         logger.dbg("no refresh got enqueued. Will do a partial full screen refresh, which might be inefficient")
         self:_refresh("partial")
     end
-
-    local software_animate = not hardware_animate
 
     if software_animate then
         Screen.swipe_animations = false
