@@ -1,11 +1,11 @@
 --[[--
 Software-based page turn "erase/wipe" animation for e-ink devices.
 
-A new submenu "Page turn animation (patch)" appears under:
+Adds a "Number of steps" option (free spinner, 2 to 24) under:
 Settings (gear) -> Gestures & Actions -> Page turning
-with two options:
-  - Enable animation (mirrors the native toggle)
-  - Number of steps (free spinner, 2 to 24)
+
+Enable/disable of the animation uses the native "swipe_animations"
+toggle; this patch does not duplicate it.
 --]] --
 
 local Device = require("device")
@@ -234,45 +234,31 @@ ReaderMenu.init = function(self)
         addToMainMenu = function(this, menu_items)
             if menu_items.page_turns and menu_items.page_turns.sub_item_table then
                 table.insert(menu_items.page_turns.sub_item_table, {
-                    text = _("Software page turn animation"),
-                    sub_item_table = {
-                        {
-                            text = _("Enable animation"),
-                            checked_func = function()
-                                return G_reader_settings:isTrue("swipe_animations")
-                            end,
-                            callback = function()
-                                G_reader_settings:flipNilOrFalse("swipe_animations")
-                            end,
-                        },
-                        {
-                            keep_menu_open = true,
-                            text_func = function()
-                                local T = require("ffi/util").template
-                                return T(_("Number of steps: %1"), getSteps())
-                            end,
-                            callback = function(touchmenu_instance)
-                                local SpinWidget = require("ui/widget/spinwidget")
-                                UIManager:show(SpinWidget:new {
-                                    title_text = _("Animation steps"),
-                                    info_text = _([[
+                    keep_menu_open = true,
+                    text_func = function()
+                        local T = require("ffi/util").template
+                        return T(_("Number of steps: %1"), getSteps())
+                    end,
+                    callback = function(touchmenu_instance)
+                        local SpinWidget = require("ui/widget/spinwidget")
+                        UIManager:show(SpinWidget:new {
+                            title_text = _("Animation steps"),
+                            info_text = _([[
 How many frames the page-turn wipe animation is split into.
 More steps = smoother animation but slower.
 Fewer steps = faster but choppier.]]),
-                                    value = getSteps(),
-                                    value_min = 2,
-                                    value_max = 24,
-                                    value_step = 1,
-                                    default_value = DEFAULT_STEPS,
-                                    precision = "%d",
-                                    callback = function(spin)
-                                        G_reader_settings:saveSetting(SETTING_KEY, spin.value)
-                                        if touchmenu_instance then touchmenu_instance:updateItems() end
-                                    end,
-                                })
+                            value = getSteps(),
+                            value_min = 2,
+                            value_max = 24,
+                            value_step = 1,
+                            default_value = DEFAULT_STEPS,
+                            precision = "%d",
+                            callback = function(spin)
+                                G_reader_settings:saveSetting(SETTING_KEY, spin.value)
+                                if touchmenu_instance then touchmenu_instance:updateItems() end
                             end,
-                        },
-                    },
+                        })
+                    end,
                 })
             end
         end,
