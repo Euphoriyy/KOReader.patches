@@ -1,8 +1,14 @@
 --[[--
 Software-based page turn "erase/wipe" animation for e-ink devices.
 
-Adds a "Number of steps" option (free spinner, 2 to 24) under:
+Adds a "Number of steps" option (free spinner, 2 to 24) and a
+"Frame budget" option (ms per animation frame) under:
 Settings (gear) -> Gestures & Actions -> Page turning
+
+The frame budget acts as a watchdog: the animation is expected to
+finish within steps x budget. On a sluggish device (e.g. right after
+waking up or opening a book), it gives up on the remaining frames and
+snaps straight to the new page instead of stuttering for seconds.
 
 Enable/disable of the animation uses the native "swipe_animations"
 toggle; this patch does not duplicate it.
@@ -13,6 +19,7 @@ local Event = require("ui/event")
 local ReaderPaging = require("apps/reader/modules/readerpaging")
 local Screen = Device.screen
 local UIManager = require("ui/uimanager")
+local time = require("ui/time")
 local logger = require("logger")
 local dbg = require("dbg")
 local userpatch = require("userpatch")
@@ -21,8 +28,18 @@ local _ = require("gettext")
 -- ============ TUNABLE (default, overridden by the menu option below) =====
 local DEFAULT_STEPS = 8
 local SETTING_KEY = "page_turn_animation_steps"
+local SETTING_FRAME_BUDGET_KEY = "page_turn_animation_frame_budget_ms"
+-- Watchdog budget (ms) per animation frame. The animation is expected
+-- to complete within steps x budget; on a sluggish device (e.g. right
+-- after wake-up or book open) it bails out and snaps to the final page.
+-- A healthy e-ink device needs ~20-25ms per frame (yieldToEPDC alone
+-- sleeps 20ms), so 50ms gives ~2x headroom before the watchdog fires.
+local DEFAULT_FRAME_BUDGET_MS = 50
 local function getSteps()
     return G_reader_settings:readSetting(SETTING_KEY, DEFAULT_STEPS)
+end
+local function getFrameBudgetMs()
+    return G_reader_settings:readSetting(SETTING_FRAME_BUDGET_KEY, DEFAULT_FRAME_BUDGET_MS)
 end
 -- ===========================================================================
 
@@ -116,6 +133,18 @@ UIManager._repaint = function(self)
             local swipe_forward = Screen.swipe_forward
             local prev_dx = 0
 
+            -- Watchdog: if the animation runs unbearably slow (e.g. the
+            -- device just woke up / just opened a book and the EPDC is
+            -- still sluggish), give up on the remaining frames and snap
+            -- to the final page instead of dragging on for seconds.
+            -- The per-frame budget scales with the number of steps, so
+            -- a healthy animation never trips it regardless of how many
+            -- steps are configured; it only fires on real slowdowns.
+            -- Only intermediate frames are guarded; the final
+            -- full-screen repaint always runs.
+            local anim_start = time.now()
+            local frame_budget = time.ms(getFrameBudgetMs())
+
             for i = 1, steps do
                 local progress = i / steps
                 local dx = math.floor(screen_w * progress)
@@ -132,6 +161,14 @@ UIManager._repaint = function(self)
                         -- black/white flash, giving a subtler, more "blended" look
                         -- closer to Amazon's native page turn animation.
                         if strip_w > 0 then
+                            if time.now() - anim_start > frame_budget * i then
+                                -- Too slow: skip the remaining intermediate frames,
+                                -- blit the new page in full and refresh it once.
+                                logger.dbg("page-turn-animation: frame budget exceeded, bailing out of animation")
+                                Screen.bb:blitFrom(new_bb, 0, 0, 0, 0, screen_w, screen_h)
+                                Screen:refreshUI(0, 0, screen_w, screen_h)
+                                break
+                            end
                             Screen:refreshUI(screen_w - dx, 0, strip_w, screen_h)
                             self:yieldToEPDC(20000)
                         end
@@ -148,6 +185,13 @@ UIManager._repaint = function(self)
 
                     if i < steps then
                         if strip_w > 0 then
+                            if time.now() - anim_start > frame_budget * i then
+                                -- Too slow: same bail-out as above.
+                                logger.dbg("page-turn-animation: frame budget exceeded, bailing out of animation")
+                                Screen.bb:blitFrom(new_bb, 0, 0, 0, 0, screen_w, screen_h)
+                                Screen:refreshUI(0, 0, screen_w, screen_h)
+                                break
+                            end
                             Screen:refreshUI(prev_dx, 0, strip_w, screen_h)
                             self:yieldToEPDC(20000)
                         end
@@ -255,6 +299,33 @@ Fewer steps = faster but choppier.]]),
                             precision = "%d",
                             callback = function(spin)
                                 G_reader_settings:saveSetting(SETTING_KEY, spin.value)
+                                if touchmenu_instance then touchmenu_instance:updateItems() end
+                            end,
+                        })
+                    end,
+                })
+                table.insert(menu_items.page_turns.sub_item_table, {
+                    keep_menu_open = true,
+                    text_func = function()
+                        local T = require("ffi/util").template
+                        return T(_("Frame budget: %1 ms"), getFrameBudgetMs())
+                    end,
+                    callback = function(touchmenu_instance)
+                        local SpinWidget = require("ui/widget/spinwidget")
+                        UIManager:show(SpinWidget:new {
+                            title_text = _("Animation frame budget"),
+                            info_text = _([[
+Maximum time allowed per animation frame. The whole animation is expected to finish within number of steps x frame budget; if it doesn't (for example when the device is slow after waking up or opening a book), the remaining frames are dropped and the new page is shown immediately.
+
+A healthy e-ink device needs about 20-25 ms per frame, so the default of 50 ms only kicks in on real slowdowns.]]),
+                            value = getFrameBudgetMs(),
+                            value_min = 30,
+                            value_max = 1000,
+                            value_step = 10,
+                            default_value = DEFAULT_FRAME_BUDGET_MS,
+                            precision = "%d",
+                            callback = function(spin)
+                                G_reader_settings:saveSetting(SETTING_FRAME_BUDGET_KEY, spin.value)
                                 if touchmenu_instance then touchmenu_instance:updateItems() end
                             end,
                         })
