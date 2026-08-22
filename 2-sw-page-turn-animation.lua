@@ -288,9 +288,8 @@ ReaderMenu.init = function(self)
                         UIManager:show(SpinWidget:new {
                             title_text = _("Animation steps"),
                             info_text = _([[
-How many frames the page-turn wipe animation is split into.
-More steps = smoother animation but slower.
-Fewer steps = faster but choppier.]]),
+Frames the wipe is split into.
+More = smoother but slower; fewer = faster but choppier.]]),
                             value = getSteps(),
                             value_min = 2,
                             value_max = 24,
@@ -315,9 +314,7 @@ Fewer steps = faster but choppier.]]),
                         UIManager:show(SpinWidget:new {
                             title_text = _("Animation frame budget"),
                             info_text = _([[
-Maximum time allowed per animation frame. The whole animation is expected to finish within number of steps x frame budget; if it doesn't (for example when the device is slow after waking up or opening a book), the remaining frames are dropped and the new page is shown immediately.
-
-A healthy e-ink device needs about 20-25 ms per frame, so the default of 50 ms only kicks in on real slowdowns.]]),
+Max time per frame. If the animation overruns steps × budget (e.g. right after wake-up), remaining frames are dropped and the new page shows at once.]]),
                             value = getFrameBudgetMs(),
                             value_min = 30,
                             value_max = 1000,
