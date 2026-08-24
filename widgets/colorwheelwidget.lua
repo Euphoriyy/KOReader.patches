@@ -599,7 +599,7 @@ function ColorWheelWidget:onCancel()
 end
 
 function ColorWheelWidget:onShow()
-    UIManager:setDirty(self, "ui")
+    UIManager:setDirty(self, "ui", nil, true)
     return true
 end
 
