@@ -10,7 +10,10 @@
 
 local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
+local Size = require("ui/size")
 local userpatch = require("userpatch")
+
+local CUSTOM_THICKNESS = nil -- tweak for thicker border (default: 0.5)
 
 local _corner_cache = {}
 
@@ -120,7 +123,7 @@ local function patchBookCoverRoundedCorners(plugin)
             local ih = math.max(1, fh - 2 * (pad + inset))
 
             -- Paint rounded corners on the outer frame rect
-            local cover_border = Screen:scaleBySize(0.5) -- tweak for thicker line
+            local cover_border = CUSTOM_THICKNESS and Screen:scaleBySize(CUSTOM_THICKNESS) or Size.border.thin
             if not self.is_directory then
                 fw, fh = target.dimen.w, target.dimen.h
                 fx = x + math.floor((self.width - fw) / 2)

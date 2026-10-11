@@ -39,7 +39,7 @@ local fill = false           -- set true to fill the entire cell ignoring aspect
 local show_file_count = true -- set to false to hide the file count
 local file_count_size = 14   -- font size of the file count badge
 local folder_font_size = 20  -- font size of the folder name
-local folder_border = 0.5    -- thickness of folder border
+local folder_border = nil    -- tweak for thicker folder border (default: 0.5)
 local folder_name = true     -- set to false to remove folder title from the center
 --======================================================================================
 
@@ -483,7 +483,7 @@ local function patchCoverBrowser(plugin)
         local image_x = fx + math.floor((frame_dimen.w - image_size.w) / 2)
         local image_y = fy + math.floor((frame_dimen.h - image_size.h) / 2)
 
-        local cover_border = Screen:scaleBySize(folder_border)
+        local cover_border = folder_border and Screen:scaleBySize(folder_border) or Size.border.thin
 
         local border_color = Blitbuffer.COLOR_BLACK
         local corner_radius = Screen:scaleBySize(24)
