@@ -16,6 +16,13 @@ local Screen = Device.screen
 local Screensaver = require("ui/screensaver")
 local ScreenSaverWidget = require("ui/widget/screensaverwidget")
 local UIManager = require("ui/uimanager")
+local logger = require("logger")
+
+-- Disable functionality on non-eInk devices
+if not Screen.eink then
+    logger.warn("this platform is not supported by dim-during-refresh")
+    return
+end
 
 local function Setting(name, default)
     local self = {}
